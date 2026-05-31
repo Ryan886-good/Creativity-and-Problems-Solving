@@ -25,10 +25,9 @@
                 <div class="today-tasks-container">
                     <div class="tasks-header">
                         <h2>今日任務</h2>
-                        <button class="add-btn" onclick="openModal('add-modal')">新增 →</button>
+                        <button class="add-btn" onclick="openModal('add-today-modal')">新增 →</button>
                     </div>
-
-                    <div class="task-list" id="task-list"></div>
+                    <div class="task-list" id="today-task-list"></div>
                 </div>
 
                 <div class="section-title">今日時間表：</div>
@@ -37,7 +36,83 @@
                         <span>8 AM</span><span>10 AM</span><span>12 PM</span><span>2 PM</span><span>4 PM</span><span>6 PM</span>
                     </div>
                     <div class="fake-axis-line">
-                        <div id="timeline-blocks"></div>
+                        <div id="today-timeline-blocks"></div>
+                    </div>
+                </div>
+                <div style="height: 30px;"></div>
+            </div>
+
+            <div id="calendar-view" class="page-view" style="display: none;">
+                <div class="back-btn" onclick="switchView('home-view')">＜ 返回主頁</div>
+                
+                <div class="schedule-card">
+                    <div class="schedule-row top-row">
+                        <input type="text" id="long-task-name" placeholder="請輸入目標名稱 (例如：資料庫期末報告)">
+                        <div class="btn-group">
+                            <button class="btn-collapse">▲ 收起設定</button>
+                            <button class="btn-fly" id="btn-fly" onclick="saveAndFly()">確定飛入</button>
+                        </div>
+                    </div>
+                    
+                    <div class="schedule-divider"></div>
+
+                    <div class="schedule-row settings-row">
+                        <div class="setting-item">
+                            <label>截止日期：</label>
+                            <input type="date" id="long-task-date">
+                        </div>
+                        <div class="setting-item color-picker-group">
+                            <label>卡牌顏色：</label>
+                            <div class="color-options">
+                                <div class="color-circle" style="background: #ef4444;" onclick="selectLongColor(this, '#ef4444')"></div>
+                                <div class="color-circle" style="background: #f59e0b;" onclick="selectLongColor(this, '#f59e0b')"></div>
+                                <div class="color-circle selected" style="background: #10b981;" onclick="selectLongColor(this, '#10b981')"></div>
+                                <div class="color-circle" style="background: #3b82f6;" onclick="selectLongColor(this, '#3b82f6')"></div>
+                                <div class="color-circle" style="background: #8b5cf6;" onclick="selectLongColor(this, '#8b5cf6')"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="schedule-row">
+                        <div class="setting-item">
+                            <label>類型：</label>
+                            <select id="long-task-type">
+                                <option>報告</option><option>考試</option><option>作業</option><option>個人</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="schedule-row matrix-row">
+                        <p style="font-size: 13px; font-weight: bold; margin-bottom: 10px; width: 100%;">請選擇重要緊急程度 (象限座標)：</p>
+                        <div class="new-matrix-grid">
+                            <button class="mat-btn m-urg-imp" onclick="selectLongMatrix(this, '重要且緊急')">重要且緊急</button>
+                            <button class="mat-btn m-nurg-imp selected" onclick="selectLongMatrix(this, '重要不緊急')">重要不緊急</button>
+                            <button class="mat-btn m-urg-nimp" onclick="selectLongMatrix(this, '不重要且緊急')">不重要且緊急</button>
+                            <button class="mat-btn m-nurg-nimp" onclick="selectLongMatrix(this, '不重要不緊急')">不重要不緊急</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="timeline-wrapper">
+                    <p class="timeline-title">長遠計畫時間軸 / TIMELINE</p>
+                    <p class="timeline-hint">新增任務後，卡牌將出現在下方月份時間軸上</p>
+                    
+                    <div class="elegant-timeline" id="elegant-timeline">
+                        <div class="axis-line"></div>
+                        <div class="axis-arrow">▶</div>
+                        
+                        <div class="month-marker" style="left: 10%;">
+                            <div class="marker-tick"></div><span>5月</span>
+                            <div class="today-dot"></div><span class="today-text">今天</span>
+                        </div>
+                        <div class="month-marker" style="left: 50%;">
+                            <div class="marker-tick"></div><span>6月</span>
+                        </div>
+                        <div class="month-marker" style="left: 90%;">
+                            <div class="marker-tick"></div><span>7月</span>
+                        </div>
+
+                        <div id="long-timeline-tasks"></div>
                     </div>
                 </div>
                 <div style="height: 30px;"></div>
@@ -45,27 +120,13 @@
 
             <div id="learning-view" class="page-view" style="display: none;">
                 <div class="back-btn" onclick="switchView('home-view')">＜ 返回主頁</div>
-                
                 <div class="chart-box">
                     <h3>整週學習紀錄</h3>
-                    <div class="chart-area">
-                        <div class="chart-y-axis">
-                            <span>4(H)</span><span>3</span><span>2</span><span>1</span><span></span>
-                        </div>
-                        <div class="chart-bars" id="chart-bars">
-                            <p style="color:#888; font-size:12px; margin:auto;">尚無紀錄</p>
-                        </div>
-                    </div>
+                    <div class="chart-area"><div class="chart-y-axis"><span>4(H)</span><span>3</span><span>2</span><span>1</span><span></span></div><div class="chart-bars"><p style="color:#888; font-size:12px; margin:auto;">尚無紀錄</p></div></div>
                 </div>
-
                 <div class="stats-row">
                     <div class="stat-box">每日平均 <strong style="font-size:24px;">0</strong><small> 小時</small></div>
                     <div class="stat-box">上週學習時長 <strong style="font-size:24px;">0</strong><small> 小時</small></div>
-                </div>
-
-                <h3 class="section-title">各科目作業考試進度</h3>
-                <div class="progress-list" id="progress-list">
-                    <p style="color:#888; font-size:12px;">目前無追蹤項目</p>
                 </div>
                 <div style="height: 30px;"></div>
             </div>
@@ -76,68 +137,63 @@
                 <div class="feature-list">
                     <div class="feature-item" onclick="showNotification('開啟 番茄鐘 功能')"><div class="f-left">🍅 <strong>番茄鐘</strong></div><div class="f-right">﹀</div></div>
                     <div class="feature-item" onclick="showNotification('開啟 讀書音樂 功能')"><div class="f-left">🎧 <strong>讀書音樂</strong></div><div class="f-right">﹀</div></div>
-                    <div class="feature-item" onclick="showNotification('開啟 年度報告 功能')"><div class="f-left">📊 <strong>年度報告</strong></div><div class="f-right">﹀</div></div>
                     <div class="feature-item" onclick="showNotification('進入 設定')"><div class="f-left">⚙️ <strong>設定</strong></div><div class="f-right">﹀</div></div>
                 </div>
             </div>
         </div>
 
         <div class="bottom-nav">
-            <div class="nav-item" onclick="switchView('home-view')"><div class="nav-icon">📋</div><span>行事曆</span></div>
+            <div class="nav-item" onclick="switchView('calendar-view')"><div class="nav-icon">📋</div><span>行事曆</span></div>
             <div class="nav-item" onclick="switchView('learning-view')"><div class="nav-icon">📖</div><span>學習紀錄</span></div>
             <div class="nav-item" onclick="switchView('more-view')"><div class="nav-icon">≡</div><span>更多功能</span></div>
         </div>
     </div>
 
-    <div class="modal-overlay" id="add-modal">
+    <div class="modal-overlay" id="add-today-modal">
         <div class="modal-content add-task-modal">
-            <div class="modal-header-box"><h3>新增事項</h3></div>
+            <div class="modal-header-box"><h3>新增今日事項</h3></div>
             <div class="input-gray-box">
-                <div class="input-row"><label>事項名稱：</label><input type="text" id="new-task-name"></div>
+                <div class="input-row"><label>名稱：</label><input type="text" id="today-task-name"></div>
                 <div class="input-row" style="gap: 5px;">
                     <label>時間：</label>
-                    <input type="time" id="new-task-start" style="width: 45%;">
-                    <span>-</span>
-                    <input type="time" id="new-task-end" style="width: 45%;">
+                    <input type="time" id="today-task-start" style="width: 45%;"> <span>-</span> <input type="time" id="today-task-end" style="width: 45%;">
                 </div>
-                <div class="input-row"><label>章節/頁數：</label><input type="text" id="new-task-chapter"></div>
-                <div class="input-row"><label>備註：</label><input type="text" id="new-task-memo"></div>
+                <div class="input-row"><label>章節：</label><input type="text" id="today-task-chapter"></div>
+                <div class="input-row"><label>備註：</label><input type="text" id="today-task-memo"></div>
             </div>
             <div class="matrix-grid-container">
                 <div class="matrix-axis-y">▲<br>│<br>│<br>│<br>▼</div>
                 <div class="matrix-axis-x">◀ ───────── ▶</div>
                 <div class="matrix-grid">
-                    <button class="quadrant-btn q-imp-nurg" onclick="selectQuadrant(this, 'dot-important')">重要/不緊急</button>
-                    <button class="quadrant-btn q-imp-urg" onclick="selectQuadrant(this, 'dot-urgent-important')">重要/緊急</button>
-                    <button class="quadrant-btn q-nimp-nurg" onclick="selectQuadrant(this, 'dot-not-urgent')">不重要/不緊急</button>
-                    <button class="quadrant-btn q-nimp-urg" onclick="selectQuadrant(this, 'dot-urgent')">不重要/緊急</button>
+                    <button class="quadrant-btn q-imp-nurg" onclick="selectTodayQuadrant(this, 'dot-important')">重要不緊急</button>
+                    <button class="quadrant-btn q-imp-urg" onclick="selectTodayQuadrant(this, 'dot-urgent-important')">重要且緊急</button>
+                    <button class="quadrant-btn q-nimp-nurg" onclick="selectTodayQuadrant(this, 'dot-not-urgent')">不重要不緊急</button>
+                    <button class="quadrant-btn q-nimp-urg" onclick="selectTodayQuadrant(this, 'dot-urgent')">不重要且緊急</button>
                 </div>
             </div>
             <div class="modal-btns-center">
-                <button class="btn-cancel" onclick="closeModal('add-modal')">取消</button>
-                <button class="btn-save-gray" onclick="saveTask()">新增 →</button>
+                <button class="btn-cancel" onclick="closeModal('add-today-modal')">取消</button>
+                <button class="btn-save-gray" onclick="saveTodayTask()">新增</button>
             </div>
         </div>
     </div>
 
-    <div class="modal-overlay" id="edit-modal">
+    <div class="modal-overlay" id="edit-today-modal">
         <div class="modal-content add-task-modal">
-            <div class="modal-header-box"><h3 id="edit-modal-title">編輯事項</h3></div>
+            <div class="modal-header-box"><h3 id="edit-today-title">編輯事項</h3></div>
             <div class="input-gray-box">
-                <div class="input-row"><label>事項名稱：</label><input type="text" id="edit-task-name"></div>
+                <div class="input-row"><label>名稱：</label><input type="text" id="edit-today-name"></div>
                 <div class="input-row" style="gap: 5px;">
                     <label>時間：</label>
-                    <input type="time" id="edit-task-start" style="width: 45%;">
-                    <span>-</span>
-                    <input type="time" id="edit-task-end" style="width: 45%;">
+                    <input type="time" id="edit-today-start" style="width: 45%;"> <span>-</span> <input type="time" id="edit-today-end" style="width: 45%;">
                 </div>
-                <div class="input-row"><label>章節/頁數：</label><input type="text" id="edit-task-chapter"></div>
-                <div class="input-row"><label>備註：</label><input type="text" id="edit-task-memo"></div>
+                <div class="input-row"><label>章節：</label><input type="text" id="edit-today-chapter"></div>
+                <div class="input-row"><label>備註：</label><input type="text" id="edit-today-memo"></div>
             </div>
             <div class="modal-btns-center">
-                <button class="btn-delete" onclick="deleteTask()">刪除</button>
-                <button class="btn-cancel" onclick="closeModal('edit-modal')">取消</button>
-                <button class="btn-save-gray" onclick="confirmEdit()">儲存</button>
+                <button class="btn-delete" onclick="deleteTodayTask()">刪除</button>
+                <button class="btn-cancel" onclick="closeModal('edit-today-modal')">取消</button>
+                <button class="btn-save-gray" onclick="confirmEditToday()">儲存</button>
             </div>
         </div>
     </div>
@@ -145,15 +201,15 @@
     <div class="modal-overlay" id="notification-modal">
         <div class="modal-content" style="text-align: center; max-width: 300px;">
             <div style="font-size: 40px; margin-bottom: 10px;">🔔</div>
-            <h3 id="notif-title">系統提示</h3>
+            <h3 id="notif-title">提示</h3>
             <p id="notif-msg" style="color: #555;"></p>
-            <div class="modal-btns-center" style="margin-top: 20px;">
-                <button class="btn-save-gray" onclick="closeModal('notification-modal')">確認</button>
-            </div>
+            <div class="modal-btns-center" style="margin-top: 20px;"><button class="btn-save-gray" onclick="closeModal('notification-modal')">確認</button></div>
         </div>
     </div>
 
 </div>
+
+<div id="fly-element" class="fly-element"></div>
 
 <script src="script.js"></script>
 </body>

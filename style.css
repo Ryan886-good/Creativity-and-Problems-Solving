@@ -1,100 +1,95 @@
-/* ==========================================
-   全域與基礎設定
-   ========================================== */
-body { margin: 0; padding: 0; background-color: #e9ecef; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; display: flex; justify-content: center; align-items: center; min-height: 100vh; overflow-x: hidden; }
+/* 全域與基礎設定 */
+body { margin: 0; padding: 0; background-color: #f4f6f8; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; display: flex; justify-content: center; align-items: center; min-height: 100vh; overflow-x: hidden; }
 .web-container { width: 90%; max-width: 800px; height: 90vh; background-color: #ffffff; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); position: relative; overflow: hidden; display: flex; flex-direction: column; }
-
-/* 主畫面切換與基礎佈局 */
 #main-app { height: 100%; display: flex; flex-direction: column; }
-.logo-header { text-align: center; font-size: 32px; font-weight: bold; margin: 25px 0 10px; letter-spacing: 2px; color: #333; }
-.main-content { flex: 1; overflow-y: auto; padding: 0 30px; position: relative; }
-.main-content::-webkit-scrollbar { width: 6px; }
-.main-content::-webkit-scrollbar-thumb { background: #ccc; border-radius: 3px; }
-
-/* 頁面視圖共用 */
+.logo-header { text-align: center; font-size: 32px; font-weight: bold; margin: 25px 0 10px; letter-spacing: 2px; color: #333; cursor: pointer; }
+.main-content { flex: 1; overflow-y: auto; padding: 0 25px; position: relative; }
+.main-content::-webkit-scrollbar { display: none; }
 .page-view { flex-direction: column; width: 100%; animation: fadeIn 0.3s ease; }
 @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 .back-btn { font-weight: bold; font-size: 16px; cursor: pointer; padding: 10px 0; margin-bottom: 10px; color: #333; display: inline-block;}
 
 /* ==========================================
-   主頁 (行事曆) 專屬樣式
+   首頁 - 今日任務 & 今日時間表
    ========================================== */
 .today-tasks-container { background-color: #E2E2E2; border-radius: 25px; padding: 20px; margin-bottom: 30px; }
 .tasks-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
 .tasks-header h2 { margin: 0; font-size: 24px; font-weight: 900; }
-.add-btn { background-color: #8C8C8C; color: white; border: none; border-radius: 15px; padding: 8px 16px; font-size: 16px; font-weight: bold; cursor: pointer; transition: 0.2s; }
-.add-btn:hover { background-color: #666; }
-
+.add-btn { background-color: #8C8C8C; color: white; border: none; border-radius: 15px; padding: 8px 16px; font-size: 16px; font-weight: bold; cursor: pointer; }
 .task-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 15px; }
-.task-card { background-color: #C0C0C0; border-radius: 15px; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; transition: 0.2s; }
-.task-card:hover { transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+.task-card { background-color: #C0C0C0; border-radius: 15px; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; }
+.task-info { display: flex; align-items: flex-start; gap: 12px; }
+.task-check { width: 18px; height: 18px; margin-top: 3px; cursor: pointer; accent-color: #D36A15; }
 .matrix-dot { width: 12px; height: 12px; border-radius: 50%; margin-top: 6px; }
 .dot-urgent-important { background-color: #B26500; } .dot-important { background-color: #F3A01D; } 
 .dot-urgent { background-color: #F8B84E; } .dot-not-urgent { background-color: #FDE2B3; }
-
-.task-info { display: flex; align-items: flex-start; gap: 12px; }
 .task-text h3 { margin: 0 0 5px 0; font-size: 18px; }
 .task-text p { margin: 0; font-size: 13px; color: #444; }
 .task-time-action { text-align: right; }
 .task-time-action p { margin: 0 0 8px 0; font-size: 14px; font-weight: bold; }
-.reschedule-btn { background-color: #E2E2E2; border: none; border-radius: 10px; padding: 5px 15px; font-size: 13px; font-weight: bold; cursor: pointer; transition: 0.2s; }
-.reschedule-btn:hover { background-color: #d0d0d0; }
+.reschedule-btn { background-color: #E2E2E2; border: none; border-radius: 10px; padding: 5px 15px; font-size: 13px; font-weight: bold; cursor: pointer; }
 
+/* 今日時間表 (底部) */
 .section-title { font-size: 18px; font-weight: bold; margin-bottom: 15px; }
-.timeline-container { height: 80px; margin-bottom: 30px; position: relative; }
-.fake-axis-line { width: 90%; height: 2px; background-color: #ccc; margin: 30px auto 0; position: relative; }
-.fake-axis-thumb { width: 30px; height: 10px; background-color: #aaa; border-radius: 5px; position: absolute; top: -4px; left: 30%; }
+.timeline-container { height: 60px; margin-bottom: 20px; position: relative; }
+.fake-axis-line { width: 100%; height: 2px; background-color: #ccc; margin-top: 30px; position: relative; }
+#today-timeline-blocks { position: absolute; top: -4px; left: 0; width: 100%; height: 10px; }
+.timeline-block-today { position: absolute; height: 8px; border-radius: 4px; top: 1px; opacity: 0.9; }
 
 /* ==========================================
-   學習紀錄 專屬樣式
+   行事曆 - 長遠計畫卡片 & 質感時間軸
    ========================================== */
-.chart-box { background-color: #E2E2E2; border: 2px solid #888; border-radius: 20px; padding: 20px; margin-bottom: 20px; }
-.chart-box h3 { margin: 0 0 20px 0; font-size: 20px; }
-.chart-area { display: flex; height: 150px; position: relative; padding-left: 30px; border-bottom: 2px solid #555; }
-.chart-y-axis { position: absolute; left: 0; top: 0; bottom: 0; display: flex; flex-direction: column; justify-content: space-between; font-size: 10px; color: #555; font-weight: bold; padding-bottom: 20px;}
-.chart-bars { flex: 1; display: flex; justify-content: space-around; align-items: flex-end; padding-bottom: 5px; }
-.bar-col { display: flex; flex-direction: column; align-items: center; width: 10%; height: 100%; justify-content: flex-end; }
-.bar-col .bar { width: 100%; background-color: #777; margin-bottom: 5px; border-radius: 2px 2px 0 0; }
-.bar-col span { font-size: 12px; font-weight: bold; }
+.schedule-card { background: #ffffff; border-radius: 16px; padding: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); border: 1px solid #eaeaea; margin-bottom: 30px; display: flex; flex-direction: column; gap: 15px; }
+.schedule-row { display: flex; align-items: center; flex-wrap: wrap; gap: 15px; }
+.top-row { justify-content: space-between; }
+.top-row input { flex: 1; min-width: 200px; padding: 12px 15px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 14px; outline: none; }
+.btn-group { display: flex; gap: 10px; }
+.btn-collapse { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 10px 15px; font-size: 13px; font-weight: bold; color: #64748b; cursor: pointer; }
+.btn-fly { background: #6366f1; color: white; border: none; border-radius: 8px; padding: 10px 20px; font-size: 14px; font-weight: bold; cursor: pointer; box-shadow: 0 2px 5px rgba(99,102,241,0.3); }
+.schedule-divider { border-bottom: 1px dashed #e2e8f0; margin: 5px 0; }
+.settings-row { gap: 30px; }
+.setting-item { display: flex; align-items: center; gap: 10px; font-size: 14px; font-weight: bold; color: #334155; }
+.setting-item input[type="date"], .setting-item select { padding: 8px 12px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 13px; outline: none;}
 
-.stats-row { display: flex; gap: 15px; margin-bottom: 25px; }
-.stat-box { flex: 1; background-color: #E2E2E2; border-radius: 12px; padding: 15px; text-align: center; font-weight: bold; font-size: 14px; }
+/* 顏色與矩陣選擇 */
+.color-options { display: flex; gap: 8px; align-items: center; }
+.color-circle { width: 22px; height: 22px; border-radius: 50%; cursor: pointer; border: 2px solid transparent;}
+.color-circle.selected { border: 2px solid #333; box-shadow: 0 0 0 2px #fff inset; transform: scale(1.1);}
+.matrix-row { flex-direction: column; align-items: flex-start; gap: 5px; }
+.new-matrix-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; width: 100%; max-width: 350px;}
+.mat-btn { padding: 12px; border-radius: 8px; border: 2px solid transparent; font-size: 13px; font-weight: bold; cursor: pointer; color: #333;}
+.m-urg-imp { background: #fee2e2; } .m-nurg-imp { background: #fef3c7; }
+.m-urg-nimp { background: #d1fae5; } .m-nurg-nimp { background: #f1f5f9; color: #64748b;}
+.mat-btn.selected { border-color: #333; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
 
-.progress-list { display: flex; flex-direction: column; gap: 15px; }
-.progress-item { background-color: #E2E2E2; border-radius: 12px; padding: 15px; }
-.prog-info { margin-bottom: 10px; font-size: 15px; }
-.prog-info span { display: block; font-size: 11px; color: #555; margin-top: 5px; }
-.prog-bar-container { display: flex; align-items: center; gap: 10px; }
-.prog-fill { background-color: #fff; height: 12px; flex: 1; border-radius: 6px; overflow: hidden; position: relative; }
-.prog-fill::before { content: ''; position: absolute; left: 0; top: 0; height: 100%; background-color: #777; width: inherit; } /* 利用 inline style 覆蓋寬度 */
-.prog-text { font-size: 12px; font-weight: bold; width: 30px; text-align: right; }
+/* 長遠質感時間軸 */
+.timeline-wrapper { padding: 20px 0; }
+.timeline-title { font-size: 12px; font-weight: bold; letter-spacing: 1px; color: #94a3b8; margin: 0 0 5px 0;}
+.timeline-hint { font-size: 12px; color: #cbd5e1; margin: 0 0 40px 0; font-style: italic;}
+.elegant-timeline { position: relative; width: 100%; height: 180px; margin-top: 20px;}
+.axis-line { position: absolute; top: 140px; left: 0; width: 100%; height: 1px; background: #cbd5e1; }
+.axis-arrow { position: absolute; top: 136.5px; right: -5px; font-size: 10px; color: #cbd5e1; }
+.month-marker { position: absolute; top: 140px; display: flex; flex-direction: column; align-items: center; transform: translateX(-50%);}
+.marker-tick { width: 1px; height: 6px; background: #cbd5e1; margin-bottom: 5px; }
+.month-marker span { font-size: 12px; color: #94a3b8; font-weight: bold; }
+.today-dot { width: 6px; height: 6px; background: #f59e0b; border-radius: 50%; margin-top: 4px;}
+.today-text { font-size: 10px; color: #f59e0b; font-weight: bold;}
+
+/* 長遠任務方塊 (防重疊) */
+.timeline-task-block { position: absolute; height: 24px; border-radius: 12px; display: flex; align-items: center; padding: 0 10px; font-size: 11px; font-weight: bold; color: white; box-shadow: 0 2px 5px rgba(0,0,0,0.15); white-space: nowrap; overflow: hidden; cursor: pointer;}
+
+/* 飛入動畫元素 */
+.fly-element { position: fixed; width: 15px; height: 15px; border-radius: 50%; background: #6366f1; box-shadow: 0 0 10px #6366f1; pointer-events: none; opacity: 0; z-index: 1000;}
 
 /* ==========================================
-   更多功能 專屬樣式
-   ========================================== */
-.more-header { background-color: #E2E2E2; border-radius: 12px; padding: 15px 20px; margin-bottom: 20px; }
-.more-header h2 { margin: 0; font-size: 20px; }
-.feature-list { display: flex; flex-direction: column; gap: 15px; }
-.feature-item { background-color: #E2E2E2; border-radius: 10px; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; transition: 0.2s;}
-.feature-item:hover { background-color: #d0d0d0; }
-.f-left { font-size: 16px; }
-.f-right { border: 1px solid #555; padding: 2px 8px; border-radius: 5px; background: #fff; color: #555; font-weight: bold;}
-
-/* ==========================================
-   底部導覽列
+   Modals 與底部導覽列共用
    ========================================== */
 .bottom-nav { display: flex; border-top: 2px solid #ccc; background-color: #ffffff; height: 80px; z-index: 10;}
-.nav-item { flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; font-size: 14px; font-weight: bold; cursor: pointer; transition: 0.2s; }
-.nav-item:hover { background-color: #f0f0f0; }
+.nav-item { flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; font-size: 14px; font-weight: bold; cursor: pointer; }
 .nav-icon { font-size: 24px; margin-bottom: 5px; }
 
-/* ==========================================
-   彈出視窗 (Modal)
-   ========================================== */
 .modal-overlay { display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 200; }
-.modal-content { background: white; padding: 25px; border-radius: 15px; width: 85%; max-width: 450px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); }
-
-.add-task-modal { padding: 20px 30px; }
+.modal-content { background: white; padding: 25px; border-radius: 15px; width: 85%; max-width: 450px; }
 .modal-header-box { background-color: #E2E2E2; border-radius: 12px; padding: 10px 15px; margin-bottom: 20px; text-align: center; }
 .modal-header-box h3 { margin: 0; font-size: 22px; font-weight: 900; }
 .input-gray-box { background-color: #E2E2E2; border-radius: 12px; padding: 20px; margin-bottom: 20px; }
@@ -102,59 +97,22 @@ body { margin: 0; padding: 0; background-color: #e9ecef; font-family: 'Segoe UI'
 .input-row label { font-weight: bold; font-size: 14px; margin-right: 5px; white-space: nowrap; }
 .input-row input { flex: 1; background: transparent; border: none; border-bottom: 2px solid #333; outline: none; font-size: 14px; padding: 2px 5px; }
 
+/* 彈出視窗的艾豪森座標 */
 .matrix-grid-container { position: relative; width: 260px; margin: 30px auto; }
-.matrix-axis-y { position: absolute; left: 50%; top: -10px; bottom: -10px; transform: translateX(-50%); text-align: center; font-size: 10px; line-height: 12px; z-index: 0; color: #333;}
-.matrix-axis-x { position: absolute; top: 50%; left: -10px; right: -10px; transform: translateY(-50%); text-align: center; font-size: 10px; z-index: 0; color: #333;}
+.matrix-axis-y { position: absolute; left: 50%; top: -10px; bottom: -10px; transform: translateX(-50%); text-align: center; font-size: 10px; line-height: 12px; z-index: 0;}
+.matrix-axis-x { position: absolute; top: 50%; left: -10px; right: -10px; transform: translateY(-50%); text-align: center; font-size: 10px; z-index: 0;}
 .matrix-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; position: relative; z-index: 1; }
-.quadrant-btn { border: 3px solid transparent; border-radius: 8px; padding: 12px 5px; font-weight: bold; font-size: 13px; cursor: pointer; transition: 0.2s; color: #000; }
-.q-imp-nurg { background-color: #F3A01D; } .q-imp-urg { background-color: #B26500; }
-.q-nimp-nurg { background-color: #FDE2B3; } .q-nimp-urg { background-color: #F8B84E; }
-.quadrant-btn:hover { filter: brightness(0.9); }
+.quadrant-btn { border: 3px solid transparent; border-radius: 8px; padding: 12px 5px; font-weight: bold; font-size: 13px; cursor: pointer; color: #000; background-color: #E2E2E2; }
 .quadrant-btn.selected { border: 3px solid #333; transform: scale(1.05); }
 
 .modal-btns-center { display: flex; justify-content: center; gap: 15px; margin-top: 15px;}
-.btn-cancel { padding: 8px 15px; border: none; border-radius: 20px; cursor: pointer; font-weight: bold; background: #ccc; }
 .btn-save-gray { background: #666; color: white; border: none; border-radius: 20px; padding: 10px 30px; font-size: 16px; font-weight: bold; cursor: pointer; }
-.btn-save-gray:hover { background: #444; }
-/* ==========================================
-   新增的樣式：完成打勾、刪除按鈕、動態時間軸
-   ========================================== */
+.btn-cancel { padding: 8px 15px; border: none; border-radius: 20px; cursor: pointer; font-weight: bold; background: #ccc; }
+.btn-delete { background: #FF4D4D; color: white; border: none; border-radius: 20px; padding: 10px 15px; font-size: 14px; font-weight: bold; cursor: pointer; }
 
-/* 任務完成打勾框 */
-.task-check {
-    width: 20px;
-    height: 20px;
-    margin-right: 5px;
-    margin-top: 2px;
-    cursor: pointer;
-    accent-color: #D36A15; /* 打勾時的顏色 */
-}
-
-/* 刪除按鈕 */
-.btn-delete {
-    background: #FF4D4D;
-    color: white;
-    border: none;
-    border-radius: 20px;
-    padding: 10px 15px;
-    font-size: 14px;
-    font-weight: bold;
-    cursor: pointer;
-}
-.btn-delete:hover { background: #CC0000; }
-
-/* 動態時間軸區塊 */
-#timeline-blocks {
-    position: absolute;
-    top: -4px;
-    left: 0;
-    width: 100%;
-    height: 10px;
-}
-.timeline-block {
-    position: absolute;
-    height: 8px;
-    border-radius: 4px;
-    top: 1px;
-    opacity: 0.8;
-}
+/* 其他視圖簡略樣式 */
+.chart-box { background-color: #E2E2E2; border-radius: 20px; padding: 20px; margin-bottom: 20px; }
+.stats-row { display: flex; gap: 15px; margin-bottom: 25px; }
+.stat-box { flex: 1; background-color: #E2E2E2; border-radius: 12px; padding: 15px; text-align: center; font-weight: bold; font-size: 14px; }
+.feature-list { display: flex; flex-direction: column; gap: 15px; }
+.feature-item { background-color: #E2E2E2; border-radius: 10px; padding: 15px 20px; display: flex; justify-content: space-between; cursor: pointer; }

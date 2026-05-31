@@ -1,21 +1,29 @@
 // ==========================================
-// 1. 初始化與頁面切換
+// 1. 頁面切換與提示模組
 // ==========================================
 window.onload = function() {
     document.getElementById('intro-screen').style.display = 'none';
     document.getElementById('main-app').style.display = 'flex';
-    renderTasks(); // 啟動時渲染空畫面
+    
+    // 初始化首頁今日任務
+    renderTodayTasks(); 
+    
+    // 初始化長遠計畫的預設日期
+    const todayStr = new Date().toISOString().split('T')[0];
+    document.getElementById('long-task-date').value = todayStr;
+    renderLongTimeline();
 };
 
+// 點擊 Logo 也可以回首頁
+document.querySelector('.logo-header').onclick = function() { switchView('home-view'); };
+
 function switchView(viewId) {
-    const views = document.querySelectorAll('.page-view');
-    views.forEach(view => view.style.display = 'none');
+    document.querySelectorAll('.page-view').forEach(view => view.style.display = 'none');
     document.getElementById(viewId).style.display = 'flex';
 }
 
 function openModal(modalId) { document.getElementById(modalId).style.display = 'flex'; }
 function closeModal(modalId) { document.getElementById(modalId).style.display = 'none'; }
-
 function showNotification(message, title = '系統提示') {
     document.getElementById('notif-title').innerText = title;
     document.getElementById('notif-msg').innerText = message;
@@ -23,172 +31,234 @@ function showNotification(message, title = '系統提示') {
 }
 
 // ==========================================
-// 2. 核心資料管理 (使用陣列)
+// 2. 系統 A：首頁今日任務 (小時制)
 // ==========================================
-let tasks = []; // 存放所有任務的陣列
-let taskIdCounter = 1; // 用來給任務獨立 ID
-let currentSelectedQuadrantColor = 'dot-not-urgent'; 
+let todayTasks = [];
+let todayTaskId = 1;
+let currentTodayQuad = 'dot-not-urgent';
+let currentEditTodayId = null;
 
-// 選擇象限
-function selectQuadrant(btnElement, colorClass) {
-    const buttons = document.querySelectorAll('.quadrant-btn');
-    buttons.forEach(btn => btn.classList.remove('selected'));
-    btnElement.classList.add('selected');
-    currentSelectedQuadrantColor = colorClass;
+function selectTodayQuadrant(btn, colorClass) {
+    document.querySelectorAll('#add-today-modal .quadrant-btn, #edit-today-modal .quadrant-btn').forEach(el => el.classList.remove('selected'));
+    btn.classList.add('selected');
+    currentTodayQuad = colorClass;
 }
 
-// ==========================================
-// 3. 渲染邏輯 (更新任務列表與時間表)
-// ==========================================
-function renderTasks() {
-    const taskList = document.getElementById('task-list');
-    taskList.innerHTML = ''; // 清空畫面
+function saveTodayTask() {
+    const name = document.getElementById('today-task-name').value;
+    const start = document.getElementById('today-task-start').value;
+    const end = document.getElementById('today-task-end').value;
     
-    if (tasks.length === 0) {
-        taskList.innerHTML = '<p style="color:#888; text-align:center; width:100%;">目前沒有任務，趕快新增吧！</p>';
-    }
+    if (!name) return showNotification('請填寫任務名稱！', '資料未填齊');
 
-    // 生成任務卡片
-    tasks.forEach(task => {
+    todayTasks.push({
+        id: todayTaskId++, name: name, start: start, end: end,
+        chapter: document.getElementById('today-task-chapter').value,
+        memo: document.getElementById('today-task-memo').value,
+        colorClass: currentTodayQuad
+    });
+    
+    // 清空表單
+    ['name','start','end','chapter','memo'].forEach(id => document.getElementById('today-task-'+id).value = '');
+    closeModal('add-today-modal');
+    renderTodayTasks();
+}
+
+function renderTodayTasks() {
+    const list = document.getElementById('today-task-list');
+    list.innerHTML = todayTasks.length === 0 ? '<p style="color:#888; text-align:center;">今日無任務</p>' : '';
+
+    todayTasks.forEach(task => {
         const timeDisplay = (task.start && task.end) ? `${task.start} - ${task.end}` : (task.start || '時間未定');
-        const chapterText = task.chapter ? task.chapter : '';
-        const memoText = task.memo ? '| ' + task.memo : '';
-
-        const taskHTML = `
+        const extra = `${task.chapter||''} ${task.memo ? '| '+task.memo : ''}`;
+        
+        list.insertAdjacentHTML('beforeend', `
             <div class="task-card" style="border: 2px solid #8C8C8C;">
                 <div class="task-info">
-                    <input type="checkbox" class="task-check" onclick="completeTask(${task.id})">
+                    <input type="checkbox" class="task-check" onclick="completeTodayTask(${task.id})">
                     <div class="matrix-dot ${task.colorClass}"></div>
-                    <div class="task-text">
-                        <h3>${task.name}</h3>
-                        <p>${chapterText} ${memoText}</p>
-                    </div>
+                    <div class="task-text"><h3>${task.name}</h3><p>${extra}</p></div>
                 </div>
                 <div class="task-time-action">
                     <p>${timeDisplay}</p>
-                    <button class="reschedule-btn" onclick="openEditModal(${task.id})">編輯</button>
+                    <button class="reschedule-btn" onclick="openEditTodayModal(${task.id})">編輯</button>
                 </div>
             </div>
-        `;
-        taskList.insertAdjacentHTML('beforeend', taskHTML);
+        `);
     });
-
-    renderTimeline(); // 每次更新列表，同步更新時間表
+    renderTodayTimeline(); // 同步渲染時間表
 }
 
-// 動態計算並渲染時間表 (假設範圍 8AM 到 6PM，共10小時)
-function renderTimeline() {
-    const timelineContainer = document.getElementById('timeline-blocks');
-    timelineContainer.innerHTML = ''; 
+function renderTodayTimeline() {
+    const container = document.getElementById('today-timeline-blocks');
+    container.innerHTML = ''; 
 
-    tasks.forEach(task => {
-        if(!task.start || !task.end) return; // 沒有完整時間就不畫
-
-        // 計算分鐘數 (扣除早上 8 點)
-        const [sHour, sMin] = task.start.split(':').map(Number);
-        const [eHour, eMin] = task.end.split(':').map(Number);
+    todayTasks.forEach(task => {
+        if(!task.start || !task.end) return;
+        const [sH, sM] = task.start.split(':').map(Number);
+        const [eH, eM] = task.end.split(':').map(Number);
+        const startMins = (sH * 60 + sM) - (8 * 60);
+        const endMins = (eH * 60 + eM) - (8 * 60);
         
-        const startTotalMins = (sHour * 60 + sMin) - (8 * 60);
-        const endTotalMins = (eHour * 60 + eMin) - (8 * 60);
+        let leftPercent = Math.max(0, Math.min((startMins / 600) * 100, 100));
+        let widthPercent = ((endMins - startMins) / 600) * 100;
         
-        // 轉換為百分比 (10小時 = 600分鐘 = 100%)
-        let leftPercent = (startTotalMins / 600) * 100;
-        let widthPercent = ((endTotalMins - startTotalMins) / 600) * 100;
-        
-        // 確保不會超出邊界
-        leftPercent = Math.max(0, Math.min(leftPercent, 100));
-        
-        // 抓取對應的顏色色碼
         let bgColor = '#F3A01D';
         if(task.colorClass === 'dot-urgent-important') bgColor = '#B26500';
         if(task.colorClass === 'dot-not-urgent') bgColor = '#FDE2B3';
         if(task.colorClass === 'dot-urgent') bgColor = '#F8B84E';
 
-        const blockHTML = `<div class="timeline-block" style="left: ${leftPercent}%; width: ${widthPercent}%; background-color: ${bgColor};"></div>`;
-        timelineContainer.insertAdjacentHTML('beforeend', blockHTML);
+        container.insertAdjacentHTML('beforeend', `<div class="timeline-block-today" style="left: ${leftPercent}%; width: ${widthPercent}%; background-color: ${bgColor};"></div>`);
     });
 }
 
-// ==========================================
-// 4. 新增、編輯、刪除與完成
-// ==========================================
-function saveTask() {
-    const name = document.getElementById('new-task-name').value;
-    const start = document.getElementById('new-task-start').value;
-    const end = document.getElementById('new-task-end').value;
-    
-    if (!name) return showNotification('請填寫事項名稱！', '資料未填齊');
-    if (start && end && start >= end) return showNotification('結束時間必須晚於開始時間！', '時間錯誤');
-
-    // 將資料存入陣列
-    tasks.push({
-        id: taskIdCounter++,
-        name: name,
-        start: start,
-        end: end,
-        chapter: document.getElementById('new-task-chapter').value,
-        memo: document.getElementById('new-task-memo').value,
-        colorClass: currentSelectedQuadrantColor
-    });
-    
-    // 清空表單
-    document.getElementById('new-task-name').value = '';
-    document.getElementById('new-task-start').value = '';
-    document.getElementById('new-task-end').value = '';
-    document.getElementById('new-task-chapter').value = '';
-    document.getElementById('new-task-memo').value = '';
-    
-    closeModal('add-modal');
-    renderTasks(); // 重新渲染
-}
-
-// 打開編輯視窗
-let currentEditingId = null;
-function openEditModal(id) {
-    const task = tasks.find(t => t.id === id);
+function openEditTodayModal(id) {
+    const task = todayTasks.find(t => t.id === id);
     if(!task) return;
-
-    currentEditingId = id;
-    document.getElementById('edit-modal-title').innerText = `編輯：${task.name}`;
-    document.getElementById('edit-task-name').value = task.name;
-    document.getElementById('edit-task-start').value = task.start;
-    document.getElementById('edit-task-end').value = task.end;
-    document.getElementById('edit-task-chapter').value = task.chapter;
-    document.getElementById('edit-task-memo').value = task.memo;
-
-    openModal('edit-modal');
+    currentEditTodayId = id;
+    document.getElementById('edit-today-name').value = task.name;
+    document.getElementById('edit-today-start').value = task.start;
+    document.getElementById('edit-today-end').value = task.end;
+    document.getElementById('edit-today-chapter').value = task.chapter;
+    document.getElementById('edit-today-memo').value = task.memo;
+    openModal('edit-today-modal');
 }
 
-// 儲存編輯
-function confirmEdit() {
-    const task = tasks.find(t => t.id === currentEditingId);
+function confirmEditToday() {
+    const task = todayTasks.find(t => t.id === currentEditTodayId);
     if(!task) return;
-
-    const newName = document.getElementById('edit-task-name').value;
-    if(!newName) return showNotification("名稱不能為空喔！", "錯誤");
-
-    task.name = newName;
-    task.start = document.getElementById('edit-task-start').value;
-    task.end = document.getElementById('edit-task-end').value;
-    task.chapter = document.getElementById('edit-task-chapter').value;
-    task.memo = document.getElementById('edit-task-memo').value;
-
-    closeModal('edit-modal');
-    renderTasks();
+    task.name = document.getElementById('edit-today-name').value;
+    task.start = document.getElementById('edit-today-start').value;
+    task.end = document.getElementById('edit-today-end').value;
+    task.chapter = document.getElementById('edit-today-chapter').value;
+    task.memo = document.getElementById('edit-today-memo').value;
+    closeModal('edit-today-modal');
+    renderTodayTasks();
 }
 
-// 刪除任務
-function deleteTask() {
-    tasks = tasks.filter(t => t.id !== currentEditingId);
-    closeModal('edit-modal');
-    renderTasks();
+function deleteTodayTask() {
+    todayTasks = todayTasks.filter(t => t.id !== currentEditTodayId);
+    closeModal('edit-today-modal');
+    renderTodayTasks();
 }
 
-// 完成打勾勾 (目前邏輯：完成即從今日任務中移除)
-function completeTask(id) {
+function completeTodayTask(id) {
     setTimeout(() => {
-        tasks = tasks.filter(t => t.id !== id);
-        renderTasks();
-        showNotification('太棒了！你又完成了一項任務 🎉', '任務完成');
-    }, 300); // 延遲300毫秒讓使用者看到打勾的動畫
+        todayTasks = todayTasks.filter(t => t.id !== id);
+        renderTodayTasks();
+    }, 300);
+}
+
+
+// ==========================================
+// 3. 系統 B：行事曆長遠排程 (月份制 + 防重疊飛入)
+// ==========================================
+let longTasks = [];
+let longTaskId = 1;
+let currentLongColor = '#10b981'; 
+let currentLongMatrix = '重要不緊急';
+
+const timelineStart = new Date('2026-05-01').getTime();
+const timelineEnd = new Date('2026-07-31').getTime();
+const totalDuration = timelineEnd - timelineStart;
+
+function selectLongColor(element, color) {
+    document.querySelectorAll('.color-circle').forEach(el => el.classList.remove('selected'));
+    element.classList.add('selected');
+    currentLongColor = color;
+}
+function selectLongMatrix(element, matrixValue) {
+    document.querySelectorAll('.mat-btn').forEach(el => el.classList.remove('selected'));
+    element.classList.add('selected');
+    currentLongMatrix = matrixValue;
+}
+
+function saveAndFly() {
+    const name = document.getElementById('long-task-name').value;
+    const dateStr = document.getElementById('long-task-date').value;
+    
+    if (!name || !dateStr) return showNotification('請輸入目標名稱與截止日期！', '資料不完整');
+
+    let leftPercent = ((new Date(dateStr).getTime() - timelineStart) / totalDuration) * 100;
+    leftPercent = Math.max(0, Math.min(leftPercent, 90)); // 避免超出右邊
+
+    const newTask = {
+        id: longTaskId++, name: name, leftPercent: leftPercent,
+        color: currentLongColor, type: document.getElementById('long-task-type').value,
+        matrix: currentLongMatrix
+    };
+    longTasks.push(newTask);
+    triggerFlyAnimation(newTask);
+}
+
+function triggerFlyAnimation(task) {
+    const btn = document.getElementById('btn-fly');
+    const flyEl = document.getElementById('fly-element');
+    const timelineContainer = document.getElementById('elegant-timeline');
+
+    const btnRect = btn.getBoundingClientRect();
+    const timelineRect = timelineContainer.getBoundingClientRect();
+    
+    const startX = btnRect.left + btnRect.width / 2;
+    const startY = btnRect.top + btnRect.height / 2;
+    const endX = timelineRect.left + (timelineRect.width * (task.leftPercent / 100));
+    const endY = timelineRect.top + 80; // 飛入時間軸上方
+
+    flyEl.style.transition = 'none';
+    flyEl.style.transform = `translate(${startX}px, ${startY}px)`;
+    flyEl.style.backgroundColor = task.color;
+    flyEl.style.boxShadow = `0 0 15px ${task.color}`;
+    flyEl.style.opacity = '1';
+
+    void flyEl.offsetWidth; // Force reflow
+
+    flyEl.style.transition = 'all 0.7s cubic-bezier(0.25, 1, 0.5, 1)';
+    flyEl.style.transform = `translate(${endX}px, ${endY}px) scale(1.5)`;
+
+    setTimeout(() => {
+        flyEl.style.opacity = '0';
+        document.getElementById('long-task-name').value = '';
+        renderLongTimeline();
+    }, 700);
+}
+
+function renderLongTimeline() {
+    const container = document.getElementById('long-timeline-tasks');
+    container.innerHTML = '';
+
+    longTasks.sort((a, b) => a.leftPercent - b.leftPercent); // 依時間(左到右)排序
+
+    const blockWidthPercent = 18; // 預估文字方塊佔用的 %
+    let rows = [];
+
+    longTasks.forEach(task => {
+        let placedRow = 0;
+        let placed = false;
+
+        // 防重疊演算法：尋找可以放的列
+        for (let i = 0; i < rows.length; i++) {
+            if (rows[i] < task.leftPercent) {
+                placedRow = i;
+                rows[i] = task.leftPercent + blockWidthPercent;
+                placed = true;
+                break;
+            }
+        }
+        if (!placed) {
+            placedRow = rows.length;
+            rows.push(task.leftPercent + blockWidthPercent);
+        }
+
+        const bottomOffset = 140 - (placedRow * 32) - 15;
+
+        const block = document.createElement('div');
+        block.className = 'timeline-task-block';
+        block.style.left = `${task.leftPercent}%`;
+        block.style.top = `${bottomOffset}px`;
+        block.style.backgroundColor = task.color;
+        block.innerText = task.name;
+        block.onclick = () => showNotification(`【${task.name}】\n類型：${task.type}\n狀態：${task.matrix}`, '長遠計畫詳情');
+        
+        container.appendChild(block);
+    });
 }
