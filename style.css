@@ -116,3 +116,45 @@ body { margin: 0; padding: 0; background-color: #e9ecef; font-family: 'Segoe UI'
 .btn-cancel { padding: 8px 15px; border: none; border-radius: 20px; cursor: pointer; font-weight: bold; background: #ccc; }
 .btn-save-gray { background: #666; color: white; border: none; border-radius: 20px; padding: 10px 30px; font-size: 16px; font-weight: bold; cursor: pointer; }
 .btn-save-gray:hover { background: #444; }
+/* ==========================================
+   新增的樣式：完成打勾、刪除按鈕、動態時間軸
+   ========================================== */
+
+/* 任務完成打勾框 */
+.task-check {
+    width: 20px;
+    height: 20px;
+    margin-right: 5px;
+    margin-top: 2px;
+    cursor: pointer;
+    accent-color: #D36A15; /* 打勾時的顏色 */
+}
+
+/* 刪除按鈕 */
+.btn-delete {
+    background: #FF4D4D;
+    color: white;
+    border: none;
+    border-radius: 20px;
+    padding: 10px 15px;
+    font-size: 14px;
+    font-weight: bold;
+    cursor: pointer;
+}
+.btn-delete:hover { background: #CC0000; }
+
+/* 動態時間軸區塊 */
+#timeline-blocks {
+    position: absolute;
+    top: -4px;
+    left: 0;
+    width: 100%;
+    height: 10px;
+}
+.timeline-block {
+    position: absolute;
+    height: 8px;
+    border-radius: 4px;
+    top: 1px;
+    opacity: 0.8;
+}
