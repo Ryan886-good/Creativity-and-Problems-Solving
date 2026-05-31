@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TOPlan Web App</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="web-container" >
+
+    <div id="intro-screen" style="display: none;">
+        <div class="anim-container">
+            <span id="to" class="letter">To</span>
+            <span id="p" class="letter">p</span>
+            <span id="lan" class="letter">lan</span>
+        </div>
+    </div>
+
+    <div id="main-app">
+        <div class="logo-header">________Toplan</div>
+        
+        <div class="main-content">
+            <div class="today-tasks-container">
+                <div class="tasks-header">
+                    <h2>今日任務</h2>
+                    <button class="add-btn" onclick="openModal('add-modal')">新增 →</button>
+                </div>
+
+                <div class="task-list" id="task-list">
+                    <div class="task-card">
+                        <div class="task-info">
+                            <div class="matrix-dot dot-urgent-important"></div>
+                            <div class="task-text">
+                                <h3>微積分(4-1)</h3>
+                            </div>
+                        </div>
+                        <div class="task-time-action">
+                            <p>10:00-11:00</p>
+                            <button class="reschedule-btn" onclick="openRescheduleModal('微積分(4-1)')">改期</button>
+                        </div>
+                    </div>
+                    
+                    <div class="task-card">
+                        <div class="task-info">
+                            <div class="matrix-dot dot-important"></div>
+                            <div class="task-text">
+                                <h3>社團會議</h3>
+                                <p>誠 301</p>
+                            </div>
+                        </div>
+                        <div class="task-time-action">
+                            <p>12:00-13:00</p>
+                            <button class="reschedule-btn" onclick="openRescheduleModal('社團會議')">改期</button>
+                        </div>
+                    </div>
+
+                    <div class="task-card">
+                        <div class="task-info">
+                            <div class="matrix-dot dot-urgent"></div>
+                            <div class="task-text">
+                                <h3>統計學(一)</h3>
+                                <p>教 103</p>
+                            </div>
+                        </div>
+                        <div class="task-time-action">
+                            <p>13:10-15:10</p>
+                            <button class="reschedule-btn" onclick="openRescheduleModal('統計學(一)')">改期</button>
+                        </div>
+                    </div>
+
+                    <div class="task-card">
+                        <div class="task-info">
+                            <div class="matrix-dot dot-not-urgent"></div>
+                            <div class="task-text">
+                                <h3>去健身</h3>
+                                <p>頭Rol / 體育館</p>
+                            </div>
+                        </div>
+                        <div class="task-time-action">
+                            <p>15:30-17:00</p>
+                            <button class="reschedule-btn" onclick="openRescheduleModal('去健身')">改期</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="section-title">今日時間表：</div>
+            <div class="timeline-container">
+                <div style="display: flex; justify-content: space-around; font-size: 12px; color: #555;">
+                    <span>8 AM</span><span>10 AM</span><span>12 PM</span><span>2 PM</span><span>4 PM</span>
+                </div>
+                <div class="fake-axis-line">
+                    <div class="fake-axis-thumb"></div>
+                    <div style="position: absolute; left: 20%; top: -3px; width: 15%; height: 8px; background-color: #D36A15; border-radius: 4px;"></div>
+                </div>
+            </div>
+            
+            <div style="height: 30px;"></div>
+        </div>
+
+        <div class="bottom-nav">
+            <div class="nav-item" onclick="openNavModal('行事曆')">
+                <div class="nav-icon">📋</div><span>行事曆</span>
+            </div>
+            <div class="nav-item" onclick="openNavModal('學習紀錄')">
+                <div class="nav-icon">📖</div><span>學習紀錄</span>
+            </div>
+            <div class="nav-item" onclick="openNavModal('更多功能')">
+                <div class="nav-icon">≡</div><span>更多功能</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="add-modal">
+        <div class="modal-content add-task-modal">
+            <div class="modal-header-box">
+                <h3>新增事項</h3>
+            </div>
+            
+            <div class="input-gray-box">
+                <div class="input-row">
+                    <label>事項名稱：</label>
+                    <input type="text" id="new-task-name">
+                </div>
+                <div class="input-row">
+                    <label>截止日期/時間</label>
+                    <input type="datetime-local" id="new-task-time">
+                </div>
+                <div class="input-row">
+                    <label>章節 / 頁數</label>
+                    <input type="text" id="new-task-chapter">
+                </div>
+                <div class="input-row">
+                    <label>備註：</label>
+                    <input type="text" id="new-task-memo">
+                </div>
+            </div>
+
+            <div class="matrix-grid-container">
+                <div class="matrix-axis-y">▲<br>│<br>│<br>│<br>▼</div>
+                <div class="matrix-axis-x">◀ ───────── ▶</div>
+                
+                <div class="matrix-grid">
+                    <button class="quadrant-btn q-imp-nurg" onclick="selectQuadrant(this, 'dot-important')">重要/不緊急</button>
+                    <button class="quadrant-btn q-imp-urg" onclick="selectQuadrant(this, 'dot-urgent-important')">重要/緊急</button>
+                    <button class="quadrant-btn q-nimp-nurg" onclick="selectQuadrant(this, 'dot-not-urgent')">不重要/不緊急</button>
+                    <button class="quadrant-btn q-nimp-urg" onclick="selectQuadrant(this, 'dot-urgent')">不重要/緊急</button>
+                </div>
+            </div>
+
+            <div class="modal-btns-center">
+                <button class="btn-cancel" onclick="closeModal('add-modal')">取消</button>
+                <button class="btn-save-gray" onclick="saveTask()">新增 →</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="reschedule-modal">
+        <div class="modal-content">
+            <h3 id="reschedule-title">改期</h3>
+            <p style="font-size: 14px; color: #555;">請選擇新的時間：</p>
+            <input type="datetime-local" id="reschedule-time" style="width: 90%; padding: 8px; margin-bottom: 20px;">
+            <div class="modal-btns">
+                <button class="btn-cancel" onclick="closeModal('reschedule-modal')">取消</button>
+                <button class="btn-save-gray" onclick="confirmReschedule()">儲存變更</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="nav-modal">
+        <div class="modal-content" style="text-align: center;">
+            <div style="font-size: 40px; margin-bottom: 10px;">🚧</div>
+            <h3 id="nav-title">頁面切換</h3>
+            <p>即將進入 <strong id="nav-page-name"></strong> 介面</p>
+            <p style="font-size: 12px; color: #888;">(此為前端展示，後續可串接換頁邏輯)</p>
+            <div class="modal-btns-center" style="margin-top: 20px;">
+                <button class="btn-save-gray" onclick="closeModal('nav-modal')">確認</button>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>
