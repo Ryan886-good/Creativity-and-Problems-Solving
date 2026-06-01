@@ -1,264 +1,265 @@
-// ==========================================
-// 1. 頁面切換與提示模組
-// ==========================================
-window.onload = function() {
-    document.getElementById('intro-screen').style.display = 'none';
-    document.getElementById('main-app').style.display = 'flex';
-    
-    // 初始化首頁今日任務
-    renderTodayTasks(); 
-    
-    // 初始化長遠計畫的預設日期
-    const todayStr = new Date().toISOString().split('T')[0];
-    document.getElementById('long-task-date').value = todayStr;
-    renderLongTimeline();
+const MockDatabase = {
+    "user_123": { name: "小明", photo: "https://api.dicebear.com/7.x/adventurer/svg?seed=Ming" }
+};
+let currentUser = { uid: null, name: "", coins: 0, photoDataUrl: "" };
+let tasks = [];
+let activeTask = null; 
+
+// 時間軸縮放比例 (每天等於多少 pixel)
+const PX_PER_DAY = 20;
+// 起始位移 (今天在時間軸上的起點)
+const TIMELINE_START_OFFSET = 40;
+
+const quadrantColors = {
+    "重要且緊急": "var(--q1-red)",
+    "重要不緊急": "var(--q2-orange)",
+    "不重要且緊急": "var(--q3-green)",
+    "不重要不緊急": "var(--q4-blue)"
 };
 
-// 點擊 Logo 也可以回首頁
-document.querySelector('.logo-header').onclick = function() { switchView('home-view'); };
-
-function switchView(viewId) {
-    document.querySelectorAll('.page-view').forEach(view => view.style.display = 'none');
-    document.getElementById(viewId).style.display = 'flex';
+function switchScreen(screenId) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden'));
+    document.getElementById(screenId).classList.remove('hidden');
 }
 
-function openModal(modalId) { document.getElementById(modalId).style.display = 'flex'; }
-function closeModal(modalId) { document.getElementById(modalId).style.display = 'none'; }
-function showNotification(message, title = '系統提示') {
-    document.getElementById('notif-title').innerText = title;
-    document.getElementById('notif-msg').innerText = message;
-    openModal('notification-modal');
-}
+// 登入邏輯
+document.getElementById('photo-upload').addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = e => {
+            currentUser.photoDataUrl = e.target.result;
+            document.getElementById('upload-preview').innerHTML = `<img src="${currentUser.photoDataUrl}">`;
+        }
+        reader.readAsDataURL(file);
+    }
+});
 
-// ==========================================
-// 2. 系統 A：首頁今日任務 (小時制)
-// ==========================================
-let todayTasks = [];
-let todayTaskId = 1;
-let currentTodayQuad = 'dot-not-urgent';
-let currentEditTodayId = null;
-
-function selectTodayQuadrant(btn, colorClass) {
-    document.querySelectorAll('#add-today-modal .quadrant-btn, #edit-today-modal .quadrant-btn').forEach(el => el.classList.remove('selected'));
-    btn.classList.add('selected');
-    currentTodayQuad = colorClass;
-}
-
-function saveTodayTask() {
-    const name = document.getElementById('today-task-name').value;
-    const start = document.getElementById('today-task-start').value;
-    const end = document.getElementById('today-task-end').value;
+document.getElementById('btn-register').addEventListener('click', () => {
+    const name = document.getElementById('username-input').value;
+    if (!name || !currentUser.photoDataUrl) return alert('請輸入暱稱並上傳照片！');
     
-    if (!name) return showNotification('請填寫任務名稱！', '資料未填齊');
-
-    todayTasks.push({
-        id: todayTaskId++, name: name, start: start, end: end,
-        chapter: document.getElementById('today-task-chapter').value,
-        memo: document.getElementById('today-task-memo').value,
-        colorClass: currentTodayQuad
-    });
+    currentUser.uid = "user_" + Math.floor(Math.random() * 10000);
+    currentUser.name = name;
+    MockDatabase[currentUser.uid] = { name: currentUser.name, photo: currentUser.photoDataUrl };
     
-    // 清空表單
-    ['name','start','end','chapter','memo'].forEach(id => document.getElementById('today-task-'+id).value = '');
-    closeModal('add-today-modal');
-    renderTodayTasks();
-}
-
-function renderTodayTasks() {
-    const list = document.getElementById('today-task-list');
-    list.innerHTML = todayTasks.length === 0 ? '<p style="color:#888; text-align:center;">今日無任務</p>' : '';
-
-    todayTasks.forEach(task => {
-        const timeDisplay = (task.start && task.end) ? `${task.start} - ${task.end}` : (task.start || '時間未定');
-        const extra = `${task.chapter||''} ${task.memo ? '| '+task.memo : ''}`;
-        
-        list.insertAdjacentHTML('beforeend', `
-            <div class="task-card" style="border: 2px solid #8C8C8C;">
-                <div class="task-info">
-                    <input type="checkbox" class="task-check" onclick="completeTodayTask(${task.id})">
-                    <div class="matrix-dot ${task.colorClass}"></div>
-                    <div class="task-text"><h3>${task.name}</h3><p>${extra}</p></div>
-                </div>
-                <div class="task-time-action">
-                    <p>${timeDisplay}</p>
-                    <button class="reschedule-btn" onclick="openEditTodayModal(${task.id})">編輯</button>
-                </div>
-            </div>
-        `);
-    });
-    renderTodayTimeline(); // 同步渲染時間表
-}
-
-function renderTodayTimeline() {
-    const container = document.getElementById('today-timeline-blocks');
-    container.innerHTML = ''; 
-
-    todayTasks.forEach(task => {
-        if(!task.start || !task.end) return;
-        const [sH, sM] = task.start.split(':').map(Number);
-        const [eH, eM] = task.end.split(':').map(Number);
-        const startMins = (sH * 60 + sM) - (8 * 60);
-        const endMins = (eH * 60 + eM) - (8 * 60);
-        
-        let leftPercent = Math.max(0, Math.min((startMins / 600) * 100, 100));
-        let widthPercent = ((endMins - startMins) / 600) * 100;
-        
-        let bgColor = '#F3A01D';
-        if(task.colorClass === 'dot-urgent-important') bgColor = '#B26500';
-        if(task.colorClass === 'dot-not-urgent') bgColor = '#FDE2B3';
-        if(task.colorClass === 'dot-urgent') bgColor = '#F8B84E';
-
-        container.insertAdjacentHTML('beforeend', `<div class="timeline-block-today" style="left: ${leftPercent}%; width: ${widthPercent}%; background-color: ${bgColor};"></div>`);
-    });
-}
-
-function openEditTodayModal(id) {
-    const task = todayTasks.find(t => t.id === id);
-    if(!task) return;
-    currentEditTodayId = id;
-    document.getElementById('edit-today-name').value = task.name;
-    document.getElementById('edit-today-start').value = task.start;
-    document.getElementById('edit-today-end').value = task.end;
-    document.getElementById('edit-today-chapter').value = task.chapter;
-    document.getElementById('edit-today-memo').value = task.memo;
-    openModal('edit-today-modal');
-}
-
-function confirmEditToday() {
-    const task = todayTasks.find(t => t.id === currentEditTodayId);
-    if(!task) return;
-    task.name = document.getElementById('edit-today-name').value;
-    task.start = document.getElementById('edit-today-start').value;
-    task.end = document.getElementById('edit-today-end').value;
-    task.chapter = document.getElementById('edit-today-chapter').value;
-    task.memo = document.getElementById('edit-today-memo').value;
-    closeModal('edit-today-modal');
-    renderTodayTasks();
-}
-
-function deleteTodayTask() {
-    todayTasks = todayTasks.filter(t => t.id !== currentEditTodayId);
-    closeModal('edit-today-modal');
-    renderTodayTasks();
-}
-
-function completeTodayTask(id) {
-    setTimeout(() => {
-        todayTasks = todayTasks.filter(t => t.id !== id);
-        renderTodayTasks();
-    }, 300);
-}
-
-
-// ==========================================
-// 3. 系統 B：行事曆長遠排程 (月份制 + 防重疊飛入)
-// ==========================================
-let longTasks = [];
-let longTaskId = 1;
-let currentLongColor = '#10b981'; 
-let currentLongMatrix = '重要不緊急';
-
-const timelineStart = new Date('2026-05-01').getTime();
-const timelineEnd = new Date('2026-07-31').getTime();
-const totalDuration = timelineEnd - timelineStart;
-
-function selectLongColor(element, color) {
-    document.querySelectorAll('.color-circle').forEach(el => el.classList.remove('selected'));
-    element.classList.add('selected');
-    currentLongColor = color;
-}
-function selectLongMatrix(element, matrixValue) {
-    document.querySelectorAll('.mat-btn').forEach(el => el.classList.remove('selected'));
-    element.classList.add('selected');
-    currentLongMatrix = matrixValue;
-}
-
-function saveAndFly() {
-    const name = document.getElementById('long-task-name').value;
-    const dateStr = document.getElementById('long-task-date').value;
+    document.getElementById('my-uid-display').innerText = `我的 ID: ${currentUser.uid}`;
+    document.getElementById('app-header').classList.remove('hidden');
+    switchScreen('screen-tasks');
     
-    if (!name || !dateStr) return showNotification('請輸入目標名稱與截止日期！', '資料不完整');
+    // 初始化時先畫出時間軸的月份刻度
+    renderTimeline();
+});
 
-    let leftPercent = ((new Date(dateStr).getTime() - timelineStart) / totalDuration) * 100;
-    leftPercent = Math.max(0, Math.min(leftPercent, 90)); // 避免超出右邊
+let selectedType = "報告";
+let selectedQuadrant = "重要不緊急";
 
-    const newTask = {
-        id: longTaskId++, name: name, leftPercent: leftPercent,
-        color: currentLongColor, type: document.getElementById('long-task-type').value,
-        matrix: currentLongMatrix
+document.getElementById('toggle-btn').addEventListener('click', function() {
+    const details = document.getElementById('details-area');
+    if (details.style.display === 'block') {
+        details.style.display = 'none';
+        this.innerText = '▼ 詳細設定';
+    } else {
+        details.style.display = 'block';
+        this.innerText = '▲ 收起設定';
+    }
+});
+
+document.querySelectorAll('.type-pill').forEach(el => el.addEventListener('click', function() {
+    document.querySelectorAll('.type-pill').forEach(s => s.classList.remove('selected'));
+    this.classList.add('selected');
+    selectedType = this.innerText;
+}));
+
+document.querySelectorAll('.quadrant').forEach(el => el.addEventListener('click', function() {
+    document.querySelectorAll('.quadrant').forEach(s => s.classList.remove('selected'));
+    this.classList.add('selected');
+    selectedQuadrant = this.dataset.quadrant;
+}));
+
+// --- 任務飛入時間軸 ---
+document.getElementById('submit-btn').addEventListener('click', () => {
+    const name = document.getElementById('task-name').value;
+    const dateStr = document.getElementById('task-date').value;
+    const notesStr = document.getElementById('task-notes').value;
+    if (!name || !dateStr) return alert("請填寫名稱與截止日期！");
+
+    const today = new Date();
+    today.setHours(0,0,0,0);
+    const deadline = new Date(dateStr + 'T00:00:00');
+    
+    if (deadline < today) return alert("日期必須在今天之後！");
+
+    const diffTime = deadline.getTime() - today.getTime();
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    
+    // 透過公式決定 X 軸位置
+    const leftPos = TIMELINE_START_OFFSET + (diffDays * PX_PER_DAY); 
+
+    const task = {
+        id: Date.now(), 
+        name: name, 
+        dateStr: dateStr, 
+        color: quadrantColors[selectedQuadrant],
+        type: selectedType, 
+        quadrant: selectedQuadrant, 
+        notes: notesStr,
+        daysLeft: diffDays,
+        leftPos: leftPos
     };
-    longTasks.push(newTask);
-    triggerFlyAnimation(newTask);
-}
-
-function triggerFlyAnimation(task) {
-    const btn = document.getElementById('btn-fly');
-    const flyEl = document.getElementById('fly-element');
-    const timelineContainer = document.getElementById('elegant-timeline');
-
-    const btnRect = btn.getBoundingClientRect();
-    const timelineRect = timelineContainer.getBoundingClientRect();
     
-    const startX = btnRect.left + btnRect.width / 2;
-    const startY = btnRect.top + btnRect.height / 2;
-    const endX = timelineRect.left + (timelineRect.width * (task.leftPercent / 100));
-    const endY = timelineRect.top + 80; // 飛入時間軸上方
+    tasks.push(task);
+    renderTimeline();
+    
+    document.getElementById('task-name').value = '';
+    document.getElementById('task-notes').value = '';
+});
 
-    flyEl.style.transition = 'none';
-    flyEl.style.transform = `translate(${startX}px, ${startY}px)`;
-    flyEl.style.backgroundColor = task.color;
-    flyEl.style.boxShadow = `0 0 15px ${task.color}`;
-    flyEl.style.opacity = '1';
+// --- 動態生成時間軸、月份與卡牌 ---
+function renderTimeline() {
+    const track = document.getElementById('timeline-track');
+    // 清空舊有內容 (保留軌道的底線)
+    track.querySelectorAll('.task-card, .month-marker').forEach(el => el.remove());
 
-    void flyEl.offsetWidth; // Force reflow
+    const today = new Date();
+    today.setHours(0,0,0,0);
 
-    flyEl.style.transition = 'all 0.7s cubic-bezier(0.25, 1, 0.5, 1)';
-    flyEl.style.transform = `translate(${endX}px, ${endY}px) scale(1.5)`;
+    // 1. 動態畫出未來 6 個月的月份刻度
+    for (let i = 0; i < 6; i++) {
+        let markerDate = new Date(today.getFullYear(), today.getMonth() + i, 1);
+        let diffDays = 0;
+        let labelText = `${markerDate.getMonth() + 1}月`;
 
-    setTimeout(() => {
-        flyEl.style.opacity = '0';
-        document.getElementById('long-task-name').value = '';
-        renderLongTimeline();
-    }, 700);
-}
-
-function renderLongTimeline() {
-    const container = document.getElementById('long-timeline-tasks');
-    container.innerHTML = '';
-
-    longTasks.sort((a, b) => a.leftPercent - b.leftPercent); // 依時間(左到右)排序
-
-    const blockWidthPercent = 18; // 預估文字方塊佔用的 %
-    let rows = [];
-
-    longTasks.forEach(task => {
-        let placedRow = 0;
-        let placed = false;
-
-        // 防重疊演算法：尋找可以放的列
-        for (let i = 0; i < rows.length; i++) {
-            if (rows[i] < task.leftPercent) {
-                placedRow = i;
-                rows[i] = task.leftPercent + blockWidthPercent;
-                placed = true;
-                break;
-            }
-        }
-        if (!placed) {
-            placedRow = rows.length;
-            rows.push(task.leftPercent + blockWidthPercent);
+        // 如果是第一個月(當下月)，標示在起始點，並顯示「今天」
+        if (i === 0) {
+            diffDays = 0;
+            labelText = `今天 (${today.getMonth() + 1}/${today.getDate()})`;
+        } else {
+            diffDays = (markerDate.getTime() - today.getTime()) / (1000 * 3600 * 24);
         }
 
-        const bottomOffset = 140 - (placedRow * 32) - 15;
-
-        const block = document.createElement('div');
-        block.className = 'timeline-task-block';
-        block.style.left = `${task.leftPercent}%`;
-        block.style.top = `${bottomOffset}px`;
-        block.style.backgroundColor = task.color;
-        block.innerText = task.name;
-        block.onclick = () => showNotification(`【${task.name}】\n類型：${task.type}\n狀態：${task.matrix}`, '長遠計畫詳情');
+        const leftPos = TIMELINE_START_OFFSET + (diffDays * PX_PER_DAY);
         
-        container.appendChild(block);
+        const marker = document.createElement('div');
+        marker.className = 'month-marker';
+        marker.innerText = labelText;
+        marker.style.left = `${leftPos}px`;
+        track.appendChild(marker);
+    }
+
+    // 動態加長軌道寬度 (根據最遠的任務)
+    let maxLeftPos = 1200; // 預設至少 1200px 寬
+    
+    // 2. 統計「同一天」有幾個任務，準備垂直排列
+    const dateCounts = {};
+    tasks.forEach(task => {
+        if (!dateCounts[task.dateStr]) dateCounts[task.dateStr] = 0;
+        task.stackIndex = dateCounts[task.dateStr]; // 該日的第幾個任務
+        dateCounts[task.dateStr]++;
+        
+        if (task.leftPos > maxLeftPos) maxLeftPos = task.leftPos + 100;
+    });
+
+    track.style.width = `${maxLeftPos}px`;
+
+    // 3. 畫出任務卡牌並計算 Y 軸上下堆疊
+    tasks.forEach(task => {
+        const totalOnDay = dateCounts[task.dateStr];
+        
+        // 垂直置中排列公式：基底50%，每一張卡牌間距 18%
+        const baseTop = 50;
+        const spacing = 18; 
+        const topPos = baseTop + (task.stackIndex - (totalOnDay - 1) / 2) * spacing;
+
+        const card = document.createElement('div');
+        card.className = 'task-card';
+        card.style.background = task.color;
+        card.style.left = `${task.leftPos}px`;
+        
+        track.appendChild(card);
+
+        setTimeout(() => {
+            card.style.top = `${topPos}%`;
+            card.style.opacity = '1';
+        }, 50);
+
+        card.addEventListener('click', () => openPanel(task));
     });
 }
+
+// 取得鼓勵/嘲諷語句
+function getQuoteByDays(days) {
+    if (days <= 1) return "鼠拉！";
+    if (days <= 3) return "火燒屁股囉！";
+    if (days <= 7) return "有點急囉！";
+    if (days <= 14) return "安啦！";
+    if (days <= 30) return "不慌張";
+    return "輕輕鬆鬆"; 
+}
+
+function openPanel(task) {
+    activeTask = task;
+    document.getElementById('panel-title').innerText = task.name;
+    document.getElementById('panel-title').style.borderColor = task.color; 
+    document.getElementById('panel-quadrant').innerText = task.quadrant;
+    document.getElementById('panel-type').innerText = `#${task.type}`;
+    document.getElementById('panel-date').innerText = task.dateStr;
+    document.getElementById('panel-days').innerText = task.daysLeft;
+    document.getElementById('panel-quote').innerText = getQuoteByDays(task.daysLeft);
+    document.getElementById('panel-notes-content').innerText = task.notes ? task.notes : "無";
+    document.getElementById('info-panel').style.display = 'block';
+}
+
+document.getElementById('close-panel').addEventListener('click', () => {
+    document.getElementById('info-panel').style.display = 'none';
+});
+
+document.getElementById('task-complete-btn').addEventListener('click', (e) => {
+    if (!activeTask) return;
+    
+    const btnRect = e.target.getBoundingClientRect();
+    const coinIcon = document.querySelector('.coin-display').getBoundingClientRect();
+    
+    const coin = document.createElement('div');
+    coin.className = 'flying-coin';
+    coin.innerText = '🪙';
+    coin.style.left = `${btnRect.left + btnRect.width/2}px`;
+    coin.style.top = `${btnRect.top}px`;
+    document.body.appendChild(coin);
+
+    setTimeout(() => {
+        coin.style.left = `${coinIcon.left}px`;
+        coin.style.top = `${coinIcon.top}px`;
+        coin.style.transform = 'scale(0.5)';
+    }, 50);
+
+    coin.addEventListener('transitionend', () => {
+        coin.remove();
+        currentUser.coins++;
+        document.getElementById('coin-count').innerText = currentUser.coins;
+    });
+
+    document.getElementById('info-panel').style.display = 'none';
+    tasks = tasks.filter(t => t.id !== activeTask.id);
+    renderTimeline();
+});
+
+document.getElementById('btn-go-store').addEventListener('click', () => switchScreen('screen-store'));
+document.getElementById('btn-back-tasks').addEventListener('click', () => switchScreen('screen-tasks'));
+
+document.getElementById('btn-unlock').addEventListener('click', () => {
+    const targetId = document.getElementById('friend-id-input').value;
+    if (!targetId) return alert('請輸入朋友 ID！');
+    if (currentUser.coins < 2) return alert('硬幣不足！需要 2 枚。');
+
+    const friend = MockDatabase[targetId];
+    if (friend) {
+        currentUser.coins -= 2;
+        document.getElementById('coin-count').innerText = currentUser.coins;
+        document.getElementById('unlocked-name').innerText = `這是 ${friend.name} 的醜照！`;
+        document.getElementById('unlocked-photo').src = friend.photo;
+        document.getElementById('unlock-result').classList.remove('hidden');
+    } else {
+        alert('找不到這個 ID！');
+    }
+});
