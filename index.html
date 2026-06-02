@@ -15,22 +15,36 @@
             <div class="user-info">
                 <span id="my-uid-display">我的 ID: ----</span>
             </div>
-            <div class="coin-display">
-                🪙 <span id="coin-count">0</span>
+            <div class="header-right">
+                <div class="coin-display">🪙 <span id="coin-count">0</span></div>
+                <button id="btn-settings" class="icon-btn">⚙️</button>
             </div>
         </header>
 
         <section id="screen-login" class="screen active">
             <div class="login-box">
-                <h2>📸 建立你的分身</h2>
-                <p>上傳一張醜照，成為別人解鎖的驚喜（嚇）</p>
-                <input type="text" id="username-input" placeholder="輸入你的暱稱">
-                <div class="upload-area">
-                    <label for="photo-upload" class="upload-btn">選擇醜照上傳</label>
-                    <input type="file" id="photo-upload" accept="image/*" style="display: none;">
-                    <div id="upload-preview" class="preview-box">尚無照片</div>
+                <div class="auth-toggle">
+                    <button id="tab-login" class="active">登入</button>
+                    <button id="tab-register">註冊</button>
                 </div>
-                <button id="btn-register" class="primary-btn">進入系統</button>
+                
+                <h2 id="auth-title">📸 歡迎回來</h2>
+                <p id="auth-subtitle">輸入帳號密碼進入系統</p>
+
+                <input type="text" id="username-input" placeholder="輸入你的帳號 (ID)">
+                <input type="password" id="password-input" placeholder="輸入密碼">
+                
+                <div id="register-fields" class="hidden">
+                    <input type="text" id="nickname-input" placeholder="輸入你的對外暱稱">
+                    <div class="upload-area">
+                        <label for="photo-upload" class="upload-btn">選擇首張醜照上傳</label>
+                        <input type="file" id="photo-upload" accept="image/*" style="display: none;">
+                        <div id="upload-preview" class="preview-box">尚無照片</div>
+                        <input type="text" id="photo-desc-input" placeholder="為這張醜照加上敘述，吸引朋友來買 (必填)">
+                    </div>
+                </div>
+
+                <button id="btn-auth-submit" class="primary-btn">Let's go!</button>
             </div>
         </section>
 
@@ -42,6 +56,7 @@
                 <div class="action-btns">
                     <button id="toggle-btn">▼ 詳細設定</button>
                     <button id="submit-btn">確定飛入</button>
+                    <button id="cancel-edit-btn" class="hidden">取消修改</button>
                 </div>
 
                 <div class="details-area" id="details-area">
@@ -54,14 +69,13 @@
                         <span class="type-pill">生活</span>
                         <span class="type-pill">其他</span>
                     </div>
-                    <div class="matrix-title">重要緊急程度 (將自動決定卡牌顏色)：</div>
+                    <div class="matrix-title">重要緊急程度：</div>
                     <div class="matrix-container" id="matrix">
-                        <div class="quadrant q1" data-quadrant="重要且緊急">重要且緊急<br><small>(紅色)</small></div>
-                        <div class="quadrant q2 selected" data-quadrant="重要不緊急">重要不緊急<br><small>(橘色)</small></div>
-                        <div class="quadrant q3" data-quadrant="不重要且緊急">不重要且緊急<br><small>(綠色)</small></div>
-                        <div class="quadrant q4" data-quadrant="不重要不緊急">不重要不緊急<br><small>(藍色)</small></div>
+                        <div class="quadrant q1" data-quadrant="重要且緊急">重要且緊急</div>
+                        <div class="quadrant q2 selected" data-quadrant="重要不緊急">重要不緊急</div>
+                        <div class="quadrant q3" data-quadrant="不重要且緊急">不重要且緊急</div>
+                        <div class="quadrant q4" data-quadrant="不重要不緊急">不重要不緊急</div>
                     </div>
-                    
                     <div class="notes-container">
                         <textarea id="task-notes" placeholder="填寫備註... (選填)"></textarea>
                     </div>
@@ -71,24 +85,58 @@
             <div class="timeline-wrapper">
                 <div class="timeline-track" id="timeline-track">
                     <div class="arrow-line"></div>
-                    <div class="arrow-head"></div>
-                    </div>
+                    <div class="arrow-head" id="arrow-head"></div>
+                </div>
             </div>
 
             <button id="btn-go-store" class="bottom-btn">🛒 前往暗黑商店</button>
         </section>
 
         <section id="screen-store" class="screen hidden">
-            <button id="btn-back-tasks" class="back-btn">⬅ 返回任務</button>
+            <button class="back-btn back-to-tasks">⬅ 返回任務</button>
             <div class="store-box">
-                <h2>🕵️‍♂️ 解鎖朋友的醜照</h2>
-                <p>每次解鎖需要消耗 <strong>2 枚硬幣</strong></p>
-                <input type="text" id="friend-id-input" placeholder="輸入朋友的 ID (例: user_123)">
-                <button id="btn-unlock" class="unlock-btn">支付 2 🪙 解鎖！</button>
+                <h2>🕵️‍♂️ 搜尋朋友的醜照庫</h2>
+                <div class="search-bar">
+                    <input type="text" id="friend-id-input" placeholder="輸入朋友帳號 (例: testuser)">
+                    <button id="btn-search-friend" class="primary-btn search-btn">搜尋</button>
+                </div>
 
-                <div id="unlock-result" class="result-area hidden">
-                    <h3 id="unlocked-name">xxx 的醜照</h3>
-                    <img id="unlocked-photo" src="" alt="解鎖的照片">
+                <div id="store-gallery" class="store-gallery hidden">
+                    <h3 id="store-friend-name" class="store-friend-title"></h3>
+                    <div class="store-grid" id="store-grid">
+                        </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="screen-settings" class="screen hidden">
+            <button class="back-btn back-to-tasks">⬅ 返回任務</button>
+            <div class="settings-box">
+                <h2>⚙️ 個人設定</h2>
+                
+                <div class="setting-group">
+                    <h3>🎨 自訂象限顏色</h3>
+                    <div class="color-setting-row"><label>重要且緊急：</label><input type="color" id="color-q1" value="#ef4444"></div>
+                    <div class="color-setting-row"><label>重要不緊急：</label><input type="color" id="color-q2" value="#f59e0b"></div>
+                    <div class="color-setting-row"><label>不重要且緊急：</label><input type="color" id="color-q3" value="#10b981"></div>
+                    <div class="color-setting-row"><label>不重要不緊急：</label><input type="color" id="color-q4" value="#3b82f6"></div>
+                    <button id="btn-save-colors" class="secondary-btn">儲存顏色</button>
+                </div>
+
+                <div class="setting-group">
+                    <h3>📸 擴充我的醜照庫</h3>
+                    <p class="setting-hint">上傳照片並附上敘述，吸引朋友解鎖！</p>
+                    
+                    <div class="upload-area" style="margin-top: 8px;">
+                        <label for="extra-photo-upload" class="upload-btn">➕ 選擇新醜照</label>
+                        <input type="file" id="extra-photo-upload" accept="image/*" style="display: none;">
+                        <div id="extra-upload-preview" class="preview-box">預覽區</div>
+                        <input type="text" id="extra-photo-desc" placeholder="輸入照片敘述...">
+                        <button id="btn-add-extra-photo" class="primary-btn" style="margin-top: 12px; padding: 10px;">確認新增至圖庫</button>
+                    </div>
+
+                    <div class="photo-gallery" id="photo-gallery" style="margin-top: 16px;">
+                        </div>
                 </div>
             </div>
         </section>
@@ -96,11 +144,9 @@
         <div class="info-panel" id="info-panel">
             <span class="close-btn" id="close-panel">×</span>
             <h3 id="panel-title">任務標題</h3>
-            
             <div class="panel-meta">
                 <span id="panel-quadrant">重要不緊急</span> | <span id="panel-type">報告</span>
             </div>
-
             <div class="panel-details-box">
                 <p><strong>🕒 截止日期：</strong><span id="panel-date"></span></p>
                 <p><strong>⏳ 剩餘天數：</strong><span id="panel-days"></span> 天</p>
@@ -110,7 +156,11 @@
                     <div id="panel-notes-content">無</div>
                 </div>
             </div>
-
+            
+            <div class="panel-actions">
+                <button class="edit-btn" id="task-edit-btn">✏️ 修改</button>
+                <button class="delete-btn" id="task-delete-btn">🗑️ 刪除</button>
+            </div>
             <button class="complete-btn" id="task-complete-btn">完成任務 (+1 🪙)</button>
         </div>
     </div>

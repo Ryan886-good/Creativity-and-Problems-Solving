@@ -1,68 +1,126 @@
+// --- 模擬資料庫升級：photos 變成物件陣列，包含 id 與敘述 ---
 const MockDatabase = {
-    "user_123": { name: "小明", photo: "https://api.dicebear.com/7.x/adventurer/svg?seed=Ming" }
+    "testuser": { 
+        password: "123", 
+        name: "傳說中的測試員", 
+        photos: [
+            { id: "p1", url: "https://api.dicebear.com/7.x/adventurer/svg?seed=Ming", desc: "剛起床頭髮超亂" },
+            { id: "p2", url: "https://api.dicebear.com/7.x/adventurer/svg?seed=Bob", desc: "吃到超酸檸檬的瞬間" },
+            { id: "p3", url: "https://api.dicebear.com/7.x/adventurer/svg?seed=Alice", desc: "不小心跌倒的蠢樣" }
+        ] 
+    }
 };
-let currentUser = { uid: null, name: "", coins: 0, photoDataUrl: "" };
+
+// 為了讓你方便測試商店，預設給你 1000 滿滿的硬幣！
+// 並新增 unlockedPhotos 陣列來記錄已經解鎖的照片 ID
+let currentUser = { uid: null, name: "", coins: 1000, unlockedPhotos: [] }; 
+let tempPhotoDataUrl = ""; 
 let tasks = [];
 let activeTask = null; 
+let editingTaskId = null; 
 
-// 時間軸縮放比例 (每天等於多少 pixel)
-const PX_PER_DAY = 20;
-// 起始位移 (今天在時間軸上的起點)
-const TIMELINE_START_OFFSET = 40;
-
-const quadrantColors = {
-    "重要且緊急": "var(--q1-red)",
-    "重要不緊急": "var(--q2-orange)",
-    "不重要且緊急": "var(--q3-green)",
-    "不重要不緊急": "var(--q4-blue)"
+const quadrantVarMap = {
+    "重要且緊急": "--q1-color", "重要不緊急": "--q2-color",
+    "不重要且緊急": "--q3-color", "不重要不緊急": "--q4-color"
 };
+const PX_PER_DAY = 20;
+const TIMELINE_START_OFFSET = 40;
 
 function switchScreen(screenId) {
     document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden'));
     document.getElementById(screenId).classList.remove('hidden');
 }
+document.querySelectorAll('.back-to-tasks').forEach(btn => {
+    btn.addEventListener('click', () => switchScreen('screen-tasks'));
+});
+document.getElementById('btn-settings').addEventListener('click', () => {
+    loadSettings();
+    switchScreen('screen-settings');
+});
 
-// 登入邏輯
+// ==========================================
+// 1. 登入與註冊
+// ==========================================
+let authMode = 'login'; 
+
+document.getElementById('tab-login').addEventListener('click', function() {
+    authMode = 'login';
+    this.classList.add('active');
+    document.getElementById('tab-register').classList.remove('active');
+    document.getElementById('auth-title').innerText = '📸 歡迎回來';
+    document.getElementById('auth-subtitle').innerText = '輸入帳號密碼進入系統';
+    document.getElementById('register-fields').classList.add('hidden');
+});
+
+document.getElementById('tab-register').addEventListener('click', function() {
+    authMode = 'register';
+    this.classList.add('active');
+    document.getElementById('tab-login').classList.remove('active');
+    document.getElementById('auth-title').innerText = '📸 建立ID';
+    document.getElementById('auth-subtitle').innerText = '上傳一張醜照，成為別人解鎖的驚喜';
+    document.getElementById('register-fields').classList.remove('hidden');
+});
+
 document.getElementById('photo-upload').addEventListener('change', function(e) {
-    const file = e.target.files[0];
-    if (file) {
+    if (e.target.files[0]) {
         const reader = new FileReader();
         reader.onload = e => {
-            currentUser.photoDataUrl = e.target.result;
-            document.getElementById('upload-preview').innerHTML = `<img src="${currentUser.photoDataUrl}">`;
+            tempPhotoDataUrl = e.target.result;
+            document.getElementById('upload-preview').innerHTML = `<img src="${tempPhotoDataUrl}">`;
         }
-        reader.readAsDataURL(file);
+        reader.readAsDataURL(e.target.files[0]);
     }
 });
 
-document.getElementById('btn-register').addEventListener('click', () => {
-    const name = document.getElementById('username-input').value;
-    if (!name || !currentUser.photoDataUrl) return alert('請輸入暱稱並上傳照片！');
+document.getElementById('btn-auth-submit').addEventListener('click', () => {
+    const username = document.getElementById('username-input').value;
+    const password = document.getElementById('password-input').value;
     
-    currentUser.uid = "user_" + Math.floor(Math.random() * 10000);
+    if (!username || !password) return alert('請輸入帳號與密碼！');
+
+    if (authMode === 'login') {
+        const user = MockDatabase[username];
+        if (user && user.password === password) {
+            loginSuccess(username, user.name);
+        } else {
+            alert('帳號或密碼錯誤！(測試帳號: testuser / 密碼: 123)');
+        }
+    } else {
+        const nickname = document.getElementById('nickname-input').value;
+        const desc = document.getElementById('photo-desc-input').value;
+        if (!nickname || !tempPhotoDataUrl || !desc) return alert('請完整填寫暱稱、上傳照片並附上敘述！');
+        if (MockDatabase[username]) return alert('此 ID 已被註冊！');
+        
+        // 建立物件結構
+        const newPhotoObj = { id: 'p_' + Date.now(), url: tempPhotoDataUrl, desc: desc };
+        MockDatabase[username] = { password: password, name: nickname, photos: [newPhotoObj] };
+        
+        loginSuccess(username, nickname);
+        alert(`註冊成功！請記住你的帳號 ID：${username}`);
+    }
+});
+
+function loginSuccess(uid, name) {
+    currentUser.uid = uid;
     currentUser.name = name;
-    MockDatabase[currentUser.uid] = { name: currentUser.name, photo: currentUser.photoDataUrl };
-    
+    // 更新介面上的硬幣數字
+    document.getElementById('coin-count').innerText = currentUser.coins;
     document.getElementById('my-uid-display').innerText = `我的 ID: ${currentUser.uid}`;
     document.getElementById('app-header').classList.remove('hidden');
     switchScreen('screen-tasks');
-    
-    // 初始化時先畫出時間軸的月份刻度
     renderTimeline();
-});
+}
 
+// ==========================================
+// 2. 任務建立與修改 (維持不變)
+// ==========================================
 let selectedType = "報告";
 let selectedQuadrant = "重要不緊急";
 
 document.getElementById('toggle-btn').addEventListener('click', function() {
     const details = document.getElementById('details-area');
-    if (details.style.display === 'block') {
-        details.style.display = 'none';
-        this.innerText = '▼ 詳細設定';
-    } else {
-        details.style.display = 'block';
-        this.innerText = '▲ 收起設定';
-    }
+    details.style.display = (details.style.display === 'block') ? 'none' : 'block';
+    this.innerText = (details.style.display === 'block') ? '▲ 收起設定' : '▼ 詳細設定';
 });
 
 document.querySelectorAll('.type-pill').forEach(el => el.addEventListener('click', function() {
@@ -77,7 +135,6 @@ document.querySelectorAll('.quadrant').forEach(el => el.addEventListener('click'
     selectedQuadrant = this.dataset.quadrant;
 }));
 
-// --- 任務飛入時間軸 ---
 document.getElementById('submit-btn').addEventListener('click', () => {
     const name = document.getElementById('task-name').value;
     const dateStr = document.getElementById('task-date').value;
@@ -87,59 +144,42 @@ document.getElementById('submit-btn').addEventListener('click', () => {
     const today = new Date();
     today.setHours(0,0,0,0);
     const deadline = new Date(dateStr + 'T00:00:00');
-    
     if (deadline < today) return alert("日期必須在今天之後！");
 
-    const diffTime = deadline.getTime() - today.getTime();
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    const diffDays = Math.ceil((deadline.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
     
-    // 透過公式決定 X 軸位置
-    const leftPos = TIMELINE_START_OFFSET + (diffDays * PX_PER_DAY); 
+    const taskData = { name, dateStr, type: selectedType, quadrant: selectedQuadrant, notes: notesStr, daysLeft: diffDays };
 
-    const task = {
-        id: Date.now(), 
-        name: name, 
-        dateStr: dateStr, 
-        color: quadrantColors[selectedQuadrant],
-        type: selectedType, 
-        quadrant: selectedQuadrant, 
-        notes: notesStr,
-        daysLeft: diffDays,
-        leftPos: leftPos
-    };
-    
-    tasks.push(task);
-    renderTimeline();
+    if (editingTaskId) {
+        const index = tasks.findIndex(t => t.id === editingTaskId);
+        tasks[index] = { ...tasks[index], ...taskData };
+        exitEditMode();
+    } else {
+        taskData.id = Date.now();
+        tasks.push(taskData);
+    }
     
     document.getElementById('task-name').value = '';
     document.getElementById('task-notes').value = '';
+    renderTimeline();
 });
 
-// --- 動態生成時間軸、月份與卡牌 ---
 function renderTimeline() {
     const track = document.getElementById('timeline-track');
-    // 清空舊有內容 (保留軌道的底線)
+    const arrowHead = document.getElementById('arrow-head');
     track.querySelectorAll('.task-card, .month-marker').forEach(el => el.remove());
 
     const today = new Date();
     today.setHours(0,0,0,0);
+    let maxDays = 30; 
+    tasks.forEach(t => { if(t.daysLeft > maxDays) maxDays = t.daysLeft; });
+    const maxMonths = Math.ceil(maxDays / 30) + 1; 
 
-    // 1. 動態畫出未來 6 個月的月份刻度
-    for (let i = 0; i < 6; i++) {
+    for (let i = 0; i < maxMonths; i++) {
         let markerDate = new Date(today.getFullYear(), today.getMonth() + i, 1);
-        let diffDays = 0;
-        let labelText = `${markerDate.getMonth() + 1}月`;
-
-        // 如果是第一個月(當下月)，標示在起始點，並顯示「今天」
-        if (i === 0) {
-            diffDays = 0;
-            labelText = `今天 (${today.getMonth() + 1}/${today.getDate()})`;
-        } else {
-            diffDays = (markerDate.getTime() - today.getTime()) / (1000 * 3600 * 24);
-        }
-
+        let diffDays = (i === 0) ? 0 : (markerDate.getTime() - today.getTime()) / (1000 * 3600 * 24);
+        let labelText = (i === 0) ? `今天 (${today.getMonth() + 1}/${today.getDate()})` : `${markerDate.getMonth() + 1}月`;
         const leftPos = TIMELINE_START_OFFSET + (diffDays * PX_PER_DAY);
-        
         const marker = document.createElement('div');
         marker.className = 'month-marker';
         marker.innerText = labelText;
@@ -147,60 +187,41 @@ function renderTimeline() {
         track.appendChild(marker);
     }
 
-    // 動態加長軌道寬度 (根據最遠的任務)
-    let maxLeftPos = 1200; // 預設至少 1200px 寬
-    
-    // 2. 統計「同一天」有幾個任務，準備垂直排列
+    const requiredWidth = TIMELINE_START_OFFSET + (maxMonths * 30 * PX_PER_DAY) + 60;
+    track.style.width = `${requiredWidth}px`;
+    arrowHead.style.left = `${requiredWidth - 10}px`;
+
     const dateCounts = {};
     tasks.forEach(task => {
+        task.leftPos = TIMELINE_START_OFFSET + (task.daysLeft * PX_PER_DAY);
         if (!dateCounts[task.dateStr]) dateCounts[task.dateStr] = 0;
-        task.stackIndex = dateCounts[task.dateStr]; // 該日的第幾個任務
+        task.stackIndex = dateCounts[task.dateStr]; 
         dateCounts[task.dateStr]++;
-        
-        if (task.leftPos > maxLeftPos) maxLeftPos = task.leftPos + 100;
     });
 
-    track.style.width = `${maxLeftPos}px`;
-
-    // 3. 畫出任務卡牌並計算 Y 軸上下堆疊
     tasks.forEach(task => {
         const totalOnDay = dateCounts[task.dateStr];
-        
-        // 垂直置中排列公式：基底50%，每一張卡牌間距 18%
-        const baseTop = 50;
-        const spacing = 18; 
-        const topPos = baseTop + (task.stackIndex - (totalOnDay - 1) / 2) * spacing;
-
+        const topPos = 50 + (task.stackIndex - (totalOnDay - 1) / 2) * 18;
         const card = document.createElement('div');
         card.className = 'task-card';
-        card.style.background = task.color;
+        card.style.background = `var(${quadrantVarMap[task.quadrant]})`;
         card.style.left = `${task.leftPos}px`;
-        
         track.appendChild(card);
-
-        setTimeout(() => {
-            card.style.top = `${topPos}%`;
-            card.style.opacity = '1';
-        }, 50);
-
+        setTimeout(() => { card.style.top = `${topPos}%`; card.style.opacity = '1'; }, 50);
         card.addEventListener('click', () => openPanel(task));
     });
 }
 
-// 取得鼓勵/嘲諷語句
 function getQuoteByDays(days) {
-    if (days <= 1) return "鼠拉！";
-    if (days <= 3) return "火燒屁股囉！";
-    if (days <= 7) return "有點急囉！";
-    if (days <= 14) return "安啦！";
-    if (days <= 30) return "不慌張";
-    return "輕輕鬆鬆"; 
+    if (days <= 1) return "鼠拉！"; if (days <= 3) return "火燒屁股囉！";
+    if (days <= 7) return "有點急囉！"; if (days <= 14) return "安啦！";
+    if (days <= 30) return "不慌張"; return "輕輕鬆鬆"; 
 }
 
 function openPanel(task) {
     activeTask = task;
     document.getElementById('panel-title').innerText = task.name;
-    document.getElementById('panel-title').style.borderColor = task.color; 
+    document.getElementById('panel-title').style.borderColor = `var(${quadrantVarMap[task.quadrant]})`; 
     document.getElementById('panel-quadrant').innerText = task.quadrant;
     document.getElementById('panel-type').innerText = `#${task.type}`;
     document.getElementById('panel-date').innerText = task.dateStr;
@@ -210,56 +231,190 @@ function openPanel(task) {
     document.getElementById('info-panel').style.display = 'block';
 }
 
-document.getElementById('close-panel').addEventListener('click', () => {
+document.getElementById('close-panel').addEventListener('click', () => { document.getElementById('info-panel').style.display = 'none'; });
+document.getElementById('task-delete-btn').addEventListener('click', () => {
+    if(confirm('確定要刪除這個任務嗎？')) {
+        tasks = tasks.filter(t => t.id !== activeTask.id);
+        document.getElementById('info-panel').style.display = 'none';
+        renderTimeline();
+    }
+});
+document.getElementById('task-edit-btn').addEventListener('click', () => {
+    editingTaskId = activeTask.id;
+    document.getElementById('task-name').value = activeTask.name;
+    document.getElementById('task-date').value = activeTask.dateStr;
+    document.getElementById('task-notes').value = activeTask.notes;
+    document.querySelectorAll('.type-pill').forEach(s => s.classList.toggle('selected', s.innerText === activeTask.type));
+    document.querySelectorAll('.quadrant').forEach(s => s.classList.toggle('selected', s.dataset.quadrant === activeTask.quadrant));
+    selectedType = activeTask.type; selectedQuadrant = activeTask.quadrant;
+    document.querySelector('.input-container').classList.add('editing-mode');
+    document.getElementById('submit-btn').innerText = '儲存修改';
+    document.getElementById('cancel-edit-btn').classList.remove('hidden');
+    document.getElementById('details-area').style.display = 'block'; 
     document.getElementById('info-panel').style.display = 'none';
 });
+document.getElementById('cancel-edit-btn').addEventListener('click', exitEditMode);
+
+function exitEditMode() {
+    editingTaskId = null;
+    document.querySelector('.input-container').classList.remove('editing-mode');
+    document.getElementById('submit-btn').innerText = '確定飛入';
+    document.getElementById('cancel-edit-btn').classList.add('hidden');
+    document.getElementById('task-name').value = ''; document.getElementById('task-notes').value = '';
+}
 
 document.getElementById('task-complete-btn').addEventListener('click', (e) => {
-    if (!activeTask) return;
-    
     const btnRect = e.target.getBoundingClientRect();
     const coinIcon = document.querySelector('.coin-display').getBoundingClientRect();
-    
     const coin = document.createElement('div');
     coin.className = 'flying-coin';
     coin.innerText = '🪙';
     coin.style.left = `${btnRect.left + btnRect.width/2}px`;
     coin.style.top = `${btnRect.top}px`;
     document.body.appendChild(coin);
-
-    setTimeout(() => {
-        coin.style.left = `${coinIcon.left}px`;
-        coin.style.top = `${coinIcon.top}px`;
-        coin.style.transform = 'scale(0.5)';
-    }, 50);
-
+    setTimeout(() => { coin.style.left = `${coinIcon.left}px`; coin.style.top = `${coinIcon.top}px`; coin.style.transform = 'scale(0.5)'; }, 50);
     coin.addEventListener('transitionend', () => {
         coin.remove();
         currentUser.coins++;
         document.getElementById('coin-count').innerText = currentUser.coins;
     });
-
     document.getElementById('info-panel').style.display = 'none';
     tasks = tasks.filter(t => t.id !== activeTask.id);
     renderTimeline();
 });
 
+// ==========================================
+// 5. 商店解鎖機制 (九宮格櫥窗)
+// ==========================================
+const STORE_PRICE = 300; // 每張定價 300
 document.getElementById('btn-go-store').addEventListener('click', () => switchScreen('screen-store'));
-document.getElementById('btn-back-tasks').addEventListener('click', () => switchScreen('screen-tasks'));
 
-document.getElementById('btn-unlock').addEventListener('click', () => {
+document.getElementById('btn-search-friend').addEventListener('click', () => {
     const targetId = document.getElementById('friend-id-input').value;
     if (!targetId) return alert('請輸入朋友 ID！');
-    if (currentUser.coins < 2) return alert('硬幣不足！需要 2 枚。');
 
     const friend = MockDatabase[targetId];
-    if (friend) {
-        currentUser.coins -= 2;
-        document.getElementById('coin-count').innerText = currentUser.coins;
-        document.getElementById('unlocked-name').innerText = `這是 ${friend.name} 的醜照！`;
-        document.getElementById('unlocked-photo').src = friend.photo;
-        document.getElementById('unlock-result').classList.remove('hidden');
+    if (friend && friend.photos && friend.photos.length > 0) {
+        document.getElementById('store-gallery').classList.remove('hidden');
+        document.getElementById('store-friend-name').innerText = `✨ ${friend.name} 的珍藏相簿`;
+        renderStoreGrid(friend.photos);
     } else {
-        alert('找不到這個 ID！');
+        alert('找不到這個 ID，或是他還沒有上傳任何照片！');
     }
+});
+
+function renderStoreGrid(photos) {
+    const grid = document.getElementById('store-grid');
+    grid.innerHTML = ''; // 清空舊的
+
+    photos.forEach(photoObj => {
+        // 檢查當前使用者是否已經買過這張
+        const isUnlocked = currentUser.unlockedPhotos.includes(photoObj.id);
+
+        const item = document.createElement('div');
+        item.className = 'store-item';
+        
+        item.innerHTML = `
+            <div class="store-item-img-wrap">
+                <img src="${photoObj.url}" class="${isUnlocked ? '' : 'blurred'}" alt="photo">
+                ${!isUnlocked ? `<div class="buy-overlay">🔒</div>` : ''}
+            </div>
+            <div class="price">🪙 ${isUnlocked ? '已解鎖' : STORE_PRICE}</div>
+            <div class="desc">${photoObj.desc}</div>
+        `;
+
+        // 如果還沒解鎖，綁定購買事件
+        if (!isUnlocked) {
+            item.addEventListener('click', () => buyPhoto(photoObj, item));
+        }
+
+        grid.appendChild(item);
+    });
+}
+
+function buyPhoto(photoObj, itemElement) {
+    if (currentUser.coins < STORE_PRICE) {
+        return alert(`硬幣不足！需要 ${STORE_PRICE} 枚，你現在只有 ${currentUser.coins} 枚。`);
+    }
+
+    if(confirm(`確定要花費 ${STORE_PRICE} 🪙 解鎖這張照片嗎？\n(敘述：${photoObj.desc})`)) {
+        // 扣款與紀錄
+        currentUser.coins -= STORE_PRICE;
+        document.getElementById('coin-count').innerText = currentUser.coins;
+        currentUser.unlockedPhotos.push(photoObj.id);
+
+        // 視覺更新 (解開模糊、移除鎖頭、文字變更)
+        const img = itemElement.querySelector('img');
+        const overlay = itemElement.querySelector('.buy-overlay');
+        const priceText = itemElement.querySelector('.price');
+        
+        img.classList.remove('blurred');
+        if(overlay) overlay.remove();
+        priceText.innerText = '🪙 已解鎖';
+
+        // 移除點擊事件避免重複購買
+        const newItem = itemElement.cloneNode(true);
+        itemElement.parentNode.replaceChild(newItem, itemElement);
+        
+        alert("解鎖成功！快看看他的蠢樣！");
+    }
+}
+
+// ==========================================
+// 6. 設定頁面 (顏色與新增醜照)
+// ==========================================
+let extraTempDataUrl = "";
+
+function loadSettings() {
+    const myPhotos = MockDatabase[currentUser.uid].photos;
+    const gallery = document.getElementById('photo-gallery');
+    gallery.innerHTML = '';
+    myPhotos.forEach(obj => {
+        const img = document.createElement('img');
+        img.src = obj.url;
+        img.className = 'photo-thumb';
+        img.title = obj.desc; // 游標移上去可以看到自己寫的敘述
+        gallery.appendChild(img);
+    });
+}
+
+document.getElementById('btn-save-colors').addEventListener('click', () => {
+    const root = document.documentElement;
+    root.style.setProperty('--q1-color', document.getElementById('color-q1').value);
+    root.style.setProperty('--q2-color', document.getElementById('color-q2').value);
+    root.style.setProperty('--q3-color', document.getElementById('color-q3').value);
+    root.style.setProperty('--q4-color', document.getElementById('color-q4').value);
+    alert('顏色儲存成功！時間軸上的卡牌將套用新顏色。');
+    renderTimeline(); 
+});
+
+document.getElementById('extra-photo-upload').addEventListener('change', function(e) {
+    if (e.target.files[0]) {
+        const reader = new FileReader();
+        reader.onload = e => {
+            extraTempDataUrl = e.target.result;
+            document.getElementById('extra-upload-preview').innerHTML = `<img src="${extraTempDataUrl}">`;
+        }
+        reader.readAsDataURL(e.target.files[0]);
+    }
+});
+
+document.getElementById('btn-add-extra-photo').addEventListener('click', () => {
+    const desc = document.getElementById('extra-photo-desc').value;
+    if (!extraTempDataUrl || !desc) return alert("請選擇照片並輸入敘述！");
+
+    const newPhotoObj = {
+        id: 'p_' + Date.now(),
+        url: extraTempDataUrl,
+        desc: desc
+    };
+
+    MockDatabase[currentUser.uid].photos.push(newPhotoObj);
+    
+    // 清空並重新載入圖庫
+    extraTempDataUrl = "";
+    document.getElementById('extra-upload-preview').innerHTML = "預覽區";
+    document.getElementById('extra-photo-desc').value = "";
+    loadSettings(); 
+    alert('新醜照擴充成功！朋友可以在商店看到它囉。');
 });
