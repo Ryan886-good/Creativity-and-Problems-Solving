@@ -200,6 +200,8 @@ document.getElementById('submit-btn').addEventListener('click', () => {
     document.getElementById('task-name').value = '';
     document.getElementById('task-notes').value = '';
     renderTimeline();
+    document.getElementById('details-area').style.display = 'none';
+    document.getElementById('toggle-btn').innerText = '▼ 詳細設定';
 });
 
 function renderTimeline() {
@@ -403,12 +405,8 @@ async function buyCloudPhoto(photoObj, itemElement, friendUid) {
                 unlockedPhotos: currentUser.unlockedPhotos
             });
 
-            // 分潤機制：錢給朋友
-            const friendDocRef = doc(db, "users", friendUid);
-            const friendSnap = await getDoc(friendDocRef);
-            if (friendSnap.exists()) {
-                await updateDoc(friendDocRef, { coins: (friendSnap.data().coins || 0) + STORE_PRICE });
-            }
+            // ❌ 這裡原本有「分潤機制：錢給朋友」的程式碼，已經被刪除了！
+            // 現在買照片，錢只會被系統回收，朋友不會拿到錢。
 
             document.getElementById('coin-count').innerText = currentUser.coins;
             const img = itemElement.querySelector('img');
@@ -503,5 +501,24 @@ document.getElementById('btn-add-extra-photo').addEventListener('click', async (
         alert('新照片擴充成功！');
     } catch (error) {
         console.error("擴充相簿失敗:", error);
+    }
+});
+// ==========================================
+// 7. 登出功能
+// ==========================================
+document.getElementById('btn-logout').addEventListener('click', () => {
+    if (confirm('確定要登出這個帳號嗎？')) {
+        // 清空本地變數
+        currentUser = { uid: null, name: "", coins: 0, unlockedPhotos: [] };
+        // 隱藏頂部導覽列
+        document.getElementById('app-header').classList.add('hidden');
+        // 清空任務列表
+        tasks = [];
+        document.getElementById('timeline-track').innerHTML = '<div class="arrow-line"></div><div class="arrow-head" id="arrow-head"></div>';
+        
+        // 切換回登入畫面，並清空輸入框
+        document.getElementById('password-input').value = '';
+        switchScreen('screen-login');
+        alert("已成功登出！");
     }
 });
