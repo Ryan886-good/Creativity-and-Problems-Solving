@@ -1,23 +1,35 @@
-// --- 模擬資料庫升級：photos 變成物件陣列，包含 id 與敘述 ---
-const MockDatabase = {
-    "testuser": { 
-        password: "123", 
-        name: "傳說中的測試員", 
-        photos: [
-            { id: "p1", url: "https://api.dicebear.com/7.x/adventurer/svg?seed=Ming", desc: "剛起床頭髮超亂" },
-            { id: "p2", url: "https://api.dicebear.com/7.x/adventurer/svg?seed=Bob", desc: "吃到超酸檸檬的瞬間" },
-            { id: "p3", url: "https://api.dicebear.com/7.x/adventurer/svg?seed=Alice", desc: "不小心跌倒的蠢樣" }
-        ] 
-    }
+// ==========================================
+// 1. 初始化 Firebase 與雲端服務
+// ==========================================
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+import { getFirestore, doc, setDoc, getDoc, updateDoc, arrayUnion } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+import { getStorage, ref, uploadString, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-storage.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyBsb1vYPgbTSsL6W0LqBoEeaNyET2GHYRo",
+  authDomain: "uglyphototaskmanager.firebaseapp.com",
+  projectId: "uglyphototaskmanager",
+  storageBucket: "uglyphototaskmanager.firebasestorage.app",
+  messagingSenderId: "54659205691",
+  appId: "1:54659205691:web:50402b5e81fe07a536aa1e"
 };
 
-// 為了讓你方便測試商店，預設給你 1000 滿滿的硬幣！
-// 並新增 unlockedPhotos 陣列來記錄已經解鎖的照片 ID
+// 啟動雲端連線
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+const storage = getStorage(app);
+
+// ==========================================
+// 2. 全域變數與介面切換
+// ==========================================
 let currentUser = { uid: null, name: "", coins: 1000, unlockedPhotos: [] }; 
 let tempPhotoDataUrl = ""; 
+let extraTempDataUrl = "";
 let tasks = [];
 let activeTask = null; 
 let editingTaskId = null; 
+let authMode = 'login'; // 預設為登入模式
+const STORE_PRICE = 300; 
 
 const quadrantVarMap = {
     "重要且緊急": "--q1-color", "重要不緊急": "--q2-color",
@@ -39,10 +51,8 @@ document.getElementById('btn-settings').addEventListener('click', () => {
 });
 
 // ==========================================
-// 1. 登入與註冊
+// 3. 登入與註冊 (全雲端化)
 // ==========================================
-let authMode = 'login'; 
-
 document.getElementById('tab-login').addEventListener('click', function() {
     authMode = 'login';
     this.classList.add('active');
@@ -72,38 +82,67 @@ document.getElementById('photo-upload').addEventListener('change', function(e) {
     }
 });
 
-document.getElementById('btn-auth-submit').addEventListener('click', () => {
-    const username = document.getElementById('username-input').value;
+document.getElementById('btn-auth-submit').addEventListener('click', async () => {
+    const username = document.getElementById('username-input').value.trim();
     const password = document.getElementById('password-input').value;
     
     if (!username || !password) return alert('請輸入帳號與密碼！');
 
+    const userDocRef = doc(db, "users", username); 
+
     if (authMode === 'login') {
-        const user = MockDatabase[username];
-        if (user && user.password === password) {
-            loginSuccess(username, user.name);
-        } else {
-            alert('帳號或密碼錯誤！(測試帳號: testuser / 密碼: 123)');
+        try {
+            const docSnap = await getDoc(userDocRef);
+            if (docSnap.exists() && docSnap.data().password === password) {
+                const userData = docSnap.data();
+                currentUser.coins = userData.coins !== undefined ? userData.coins : 1000; 
+                currentUser.unlockedPhotos = userData.unlockedPhotos || [];
+                loginSuccess(username, userData.name);
+            } else {
+                alert('帳號不存在或密碼錯誤！');
+            }
+        } catch (error) {
+            console.error("登入錯誤:", error);
+            alert("登入失敗，請檢查網路連線。");
         }
     } else {
-        const nickname = document.getElementById('nickname-input').value;
-        const desc = document.getElementById('photo-desc-input').value;
+        // 註冊模式
+        const nickname = document.getElementById('nickname-input').value.trim();
+        const desc = document.getElementById('photo-desc-input').value.trim();
         if (!nickname || !tempPhotoDataUrl || !desc) return alert('請完整填寫暱稱、上傳照片並附上敘述！');
-        if (MockDatabase[username]) return alert('此 ID 已被註冊！');
         
-        // 建立物件結構
-        const newPhotoObj = { id: 'p_' + Date.now(), url: tempPhotoDataUrl, desc: desc };
-        MockDatabase[username] = { password: password, name: nickname, photos: [newPhotoObj] };
-        
-        loginSuccess(username, nickname);
-        alert(`註冊成功！請記住你的帳號 ID：${username}`);
+        try {
+            const docSnap = await getDoc(userDocRef);
+            if (docSnap.exists()) return alert('此帳號 ID 已被註冊！請換一個。');
+
+            alert("正在建立雲端分身，照片上傳中...");
+            const photoId = 'p_' + Date.now();
+            const storageRef = ref(storage, `photos/${username}_${photoId}`);
+            
+            await uploadString(storageRef, tempPhotoDataUrl, 'data_url');
+            const downloadURL = await getDownloadURL(storageRef);
+
+            const newPhotoObj = { id: photoId, url: downloadURL, desc: desc };
+            await setDoc(userDocRef, {
+                password: password,
+                name: nickname,
+                coins: 1000, 
+                unlockedPhotos: [],
+                photos: [newPhotoObj] 
+            });
+
+            loginSuccess(username, nickname);
+            alert(`🎉 建立成功！你的專屬 ID 為：${username}`);
+        } catch (error) {
+            console.error("註冊錯誤:", error);
+            alert("註冊失敗，請確認 Firebase 測試模式是否開啟。");
+        }
     }
 });
 
 function loginSuccess(uid, name) {
     currentUser.uid = uid;
     currentUser.name = name;
-    // 更新介面上的硬幣數字
     document.getElementById('coin-count').innerText = currentUser.coins;
     document.getElementById('my-uid-display').innerText = `我的 ID: ${currentUser.uid}`;
     document.getElementById('app-header').classList.remove('hidden');
@@ -112,7 +151,7 @@ function loginSuccess(uid, name) {
 }
 
 // ==========================================
-// 2. 任務建立與修改 (維持不變)
+// 4. 任務建立、修改與時間軸
 // ==========================================
 let selectedType = "報告";
 let selectedQuadrant = "重要不緊急";
@@ -147,7 +186,6 @@ document.getElementById('submit-btn').addEventListener('click', () => {
     if (deadline < today) return alert("日期必須在今天之後！");
 
     const diffDays = Math.ceil((deadline.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
-    
     const taskData = { name, dateStr, type: selectedType, quadrant: selectedQuadrant, notes: notesStr, daysLeft: diffDays };
 
     if (editingTaskId) {
@@ -232,6 +270,7 @@ function openPanel(task) {
 }
 
 document.getElementById('close-panel').addEventListener('click', () => { document.getElementById('info-panel').style.display = 'none'; });
+
 document.getElementById('task-delete-btn').addEventListener('click', () => {
     if(confirm('確定要刪除這個任務嗎？')) {
         tasks = tasks.filter(t => t.id !== activeTask.id);
@@ -239,6 +278,7 @@ document.getElementById('task-delete-btn').addEventListener('click', () => {
         renderTimeline();
     }
 });
+
 document.getElementById('task-edit-btn').addEventListener('click', () => {
     editingTaskId = activeTask.id;
     document.getElementById('task-name').value = activeTask.name;
@@ -253,6 +293,7 @@ document.getElementById('task-edit-btn').addEventListener('click', () => {
     document.getElementById('details-area').style.display = 'block'; 
     document.getElementById('info-panel').style.display = 'none';
 });
+
 document.getElementById('cancel-edit-btn').addEventListener('click', exitEditMode);
 
 function exitEditMode() {
@@ -263,7 +304,7 @@ function exitEditMode() {
     document.getElementById('task-name').value = ''; document.getElementById('task-notes').value = '';
 }
 
-document.getElementById('task-complete-btn').addEventListener('click', (e) => {
+document.getElementById('task-complete-btn').addEventListener('click', async (e) => {
     const btnRect = e.target.getBoundingClientRect();
     const coinIcon = document.querySelector('.coin-display').getBoundingClientRect();
     const coin = document.createElement('div');
@@ -272,45 +313,63 @@ document.getElementById('task-complete-btn').addEventListener('click', (e) => {
     coin.style.left = `${btnRect.left + btnRect.width/2}px`;
     coin.style.top = `${btnRect.top}px`;
     document.body.appendChild(coin);
+    
     setTimeout(() => { coin.style.left = `${coinIcon.left}px`; coin.style.top = `${coinIcon.top}px`; coin.style.transform = 'scale(0.5)'; }, 50);
-    coin.addEventListener('transitionend', () => {
+    
+    coin.addEventListener('transitionend', async () => {
         coin.remove();
         currentUser.coins++;
         document.getElementById('coin-count').innerText = currentUser.coins;
+        
+        // 任務完成，把硬幣數量同步到雲端
+        try {
+            const myDocRef = doc(db, "users", currentUser.uid);
+            await updateDoc(myDocRef, { coins: currentUser.coins });
+        } catch(e) { console.error("硬幣同步失敗", e); }
     });
+
     document.getElementById('info-panel').style.display = 'none';
     tasks = tasks.filter(t => t.id !== activeTask.id);
     renderTimeline();
 });
 
 // ==========================================
-// 5. 商店解鎖機制 (九宮格櫥窗)
+// 5. 商店系統 (全雲端化)
 // ==========================================
-const STORE_PRICE = 300; // 每張定價 300
 document.getElementById('btn-go-store').addEventListener('click', () => switchScreen('screen-store'));
 
-document.getElementById('btn-search-friend').addEventListener('click', () => {
-    const targetId = document.getElementById('friend-id-input').value;
+document.getElementById('btn-search-friend').addEventListener('click', async () => {
+    const targetId = document.getElementById('friend-id-input').value.trim();
     if (!targetId) return alert('請輸入朋友 ID！');
+    if (targetId === currentUser.uid) return alert('不能搜尋自己啦！');
 
-    const friend = MockDatabase[targetId];
-    if (friend && friend.photos && friend.photos.length > 0) {
-        document.getElementById('store-gallery').classList.remove('hidden');
-        document.getElementById('store-friend-name').innerText = `✨ ${friend.name} 的珍藏相簿`;
-        renderStoreGrid(friend.photos);
-    } else {
-        alert('找不到這個 ID，或是他還沒有上傳任何照片！');
+    try {
+        const friendDocRef = doc(db, "users", targetId);
+        const docSnap = await getDoc(friendDocRef);
+
+        if (docSnap.exists()) {
+            const friendData = docSnap.data();
+            if (friendData.photos && friendData.photos.length > 0) {
+                document.getElementById('store-gallery').classList.remove('hidden');
+                document.getElementById('store-friend-name').innerText = `✨ ${friendData.name} 的珍藏相簿`;
+                renderCloudStoreGrid(friendData.photos, targetId); 
+            } else {
+                alert('這個用戶還沒有上傳任何照片！');
+            }
+        } else {
+            alert('找不到這個 ID！請確認輸入是否正確。');
+        }
+    } catch (error) {
+        console.error("搜尋失敗:", error);
     }
 });
 
-function renderStoreGrid(photos) {
+function renderCloudStoreGrid(photos, friendUid) {
     const grid = document.getElementById('store-grid');
-    grid.innerHTML = ''; // 清空舊的
+    grid.innerHTML = ''; 
 
     photos.forEach(photoObj => {
-        // 檢查當前使用者是否已經買過這張
         const isUnlocked = currentUser.unlockedPhotos.includes(photoObj.id);
-
         const item = document.createElement('div');
         item.className = 'store-item';
         
@@ -323,59 +382,77 @@ function renderStoreGrid(photos) {
             <div class="desc">${photoObj.desc}</div>
         `;
 
-        // 如果還沒解鎖，綁定購買事件
         if (!isUnlocked) {
-            item.addEventListener('click', () => buyPhoto(photoObj, item));
+            item.addEventListener('click', () => buyCloudPhoto(photoObj, item, friendUid));
         }
-
         grid.appendChild(item);
     });
 }
 
-function buyPhoto(photoObj, itemElement) {
-    if (currentUser.coins < STORE_PRICE) {
-        return alert(`硬幣不足！需要 ${STORE_PRICE} 枚，你現在只有 ${currentUser.coins} 枚。`);
-    }
+async function buyCloudPhoto(photoObj, itemElement, friendUid) {
+    if (currentUser.coins < STORE_PRICE) return alert(`硬幣不足！需要 ${STORE_PRICE} 枚。`);
 
-    if(confirm(`確定要花費 ${STORE_PRICE} 🪙 解鎖這張照片嗎？\n(敘述：${photoObj.desc})`)) {
-        // 扣款與紀錄
-        currentUser.coins -= STORE_PRICE;
-        document.getElementById('coin-count').innerText = currentUser.coins;
-        currentUser.unlockedPhotos.push(photoObj.id);
+    if (confirm(`花費 ${STORE_PRICE} 🪙 解鎖這張照片？\n(敘述：${photoObj.desc})`)) {
+        try {
+            currentUser.coins -= STORE_PRICE;
+            currentUser.unlockedPhotos.push(photoObj.id);
 
-        // 視覺更新 (解開模糊、移除鎖頭、文字變更)
-        const img = itemElement.querySelector('img');
-        const overlay = itemElement.querySelector('.buy-overlay');
-        const priceText = itemElement.querySelector('.price');
-        
-        img.classList.remove('blurred');
-        if(overlay) overlay.remove();
-        priceText.innerText = '🪙 已解鎖';
+            const myDocRef = doc(db, "users", currentUser.uid);
+            await updateDoc(myDocRef, {
+                coins: currentUser.coins,
+                unlockedPhotos: currentUser.unlockedPhotos
+            });
 
-        // 移除點擊事件避免重複購買
-        const newItem = itemElement.cloneNode(true);
-        itemElement.parentNode.replaceChild(newItem, itemElement);
-        
-        alert("解鎖成功！快看看他的蠢樣！");
+            // 分潤機制：錢給朋友
+            const friendDocRef = doc(db, "users", friendUid);
+            const friendSnap = await getDoc(friendDocRef);
+            if (friendSnap.exists()) {
+                await updateDoc(friendDocRef, { coins: (friendSnap.data().coins || 0) + STORE_PRICE });
+            }
+
+            document.getElementById('coin-count').innerText = currentUser.coins;
+            const img = itemElement.querySelector('img');
+            const overlay = itemElement.querySelector('.buy-overlay');
+            const priceText = itemElement.querySelector('.price');
+            
+            img.classList.remove('blurred');
+            if (overlay) overlay.remove();
+            priceText.innerText = '🪙 已解鎖';
+
+            const newItem = itemElement.cloneNode(true);
+            itemElement.parentNode.replaceChild(newItem, itemElement);
+            
+            alert("解鎖成功！");
+        } catch (error) {
+            console.error("扣款失敗:", error);
+        }
     }
 }
 
 // ==========================================
-// 6. 設定頁面 (顏色與新增醜照)
+// 6. 設定頁面 (全雲端化)
 // ==========================================
-let extraTempDataUrl = "";
-
-function loadSettings() {
-    const myPhotos = MockDatabase[currentUser.uid].photos;
-    const gallery = document.getElementById('photo-gallery');
-    gallery.innerHTML = '';
-    myPhotos.forEach(obj => {
-        const img = document.createElement('img');
-        img.src = obj.url;
-        img.className = 'photo-thumb';
-        img.title = obj.desc; // 游標移上去可以看到自己寫的敘述
-        gallery.appendChild(img);
-    });
+async function loadSettings() {
+    try {
+        const myDocRef = doc(db, "users", currentUser.uid);
+        const docSnap = await getDoc(myDocRef);
+        
+        if (docSnap.exists()) {
+            const myPhotos = docSnap.data().photos || [];
+            const gallery = document.getElementById('photo-gallery');
+            gallery.innerHTML = '';
+            
+            myPhotos.forEach(obj => {
+                const img = document.createElement('img');
+                img.src = obj.url;
+                img.className = 'photo-thumb';
+                img.title = obj.desc; 
+                gallery.appendChild(img);
+            });
+        }
+    } catch (error) {
+        console.error("載入圖庫失敗:", error);
+    }
 }
 
 document.getElementById('btn-save-colors').addEventListener('click', () => {
@@ -384,7 +461,7 @@ document.getElementById('btn-save-colors').addEventListener('click', () => {
     root.style.setProperty('--q2-color', document.getElementById('color-q2').value);
     root.style.setProperty('--q3-color', document.getElementById('color-q3').value);
     root.style.setProperty('--q4-color', document.getElementById('color-q4').value);
-    alert('顏色儲存成功！時間軸上的卡牌將套用新顏色。');
+    alert('顏色儲存成功！時間軸將套用新色。');
     renderTimeline(); 
 });
 
@@ -399,22 +476,32 @@ document.getElementById('extra-photo-upload').addEventListener('change', functio
     }
 });
 
-document.getElementById('btn-add-extra-photo').addEventListener('click', () => {
-    const desc = document.getElementById('extra-photo-desc').value;
+document.getElementById('btn-add-extra-photo').addEventListener('click', async () => {
+    const desc = document.getElementById('extra-photo-desc').value.trim();
     if (!extraTempDataUrl || !desc) return alert("請選擇照片並輸入敘述！");
 
-    const newPhotoObj = {
-        id: 'p_' + Date.now(),
-        url: extraTempDataUrl,
-        desc: desc
-    };
+    try {
+        alert("照片上傳雲端中...");
+        const photoId = 'p_' + Date.now();
+        const storageRef = ref(storage, `photos/${currentUser.uid}_${photoId}`);
+        
+        await uploadString(storageRef, extraTempDataUrl, 'data_url');
+        const downloadURL = await getDownloadURL(storageRef);
 
-    MockDatabase[currentUser.uid].photos.push(newPhotoObj);
-    
-    // 清空並重新載入圖庫
-    extraTempDataUrl = "";
-    document.getElementById('extra-upload-preview').innerHTML = "預覽區";
-    document.getElementById('extra-photo-desc').value = "";
-    loadSettings(); 
-    alert('新醜照擴充成功！朋友可以在商店看到它囉。');
+        const myDocRef = doc(db, "users", currentUser.uid);
+        const newPhotoObj = { id: photoId, url: downloadURL, desc: desc };
+
+        await updateDoc(myDocRef, {
+            photos: arrayUnion(newPhotoObj)
+        });
+
+        extraTempDataUrl = "";
+        document.getElementById('extra-upload-preview').innerHTML = "預覽區";
+        document.getElementById('extra-photo-desc').value = "";
+        
+        await loadSettings(); 
+        alert('新照片擴充成功！');
+    } catch (error) {
+        console.error("擴充相簿失敗:", error);
+    }
 });

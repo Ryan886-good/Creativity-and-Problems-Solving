@@ -1,0 +1,17 @@
+// Import the functions you need from the SDKs you need
+import { initializeApp } from "firebase/app";
+// TODO: Add SDKs for Firebase products that you want to use
+// https://firebase.google.com/docs/web/setup#available-libraries
+
+// Your web app's Firebase configuration
+const firebaseConfig = {
+  apiKey: "AIzaSyBsb1vYPgbTSsL6W0LqBoEeaNyET2GHYRo",
+  authDomain: "uglyphototaskmanager.firebaseapp.com",
+  projectId: "uglyphototaskmanager",
+  storageBucket: "uglyphototaskmanager.firebasestorage.app",
+  messagingSenderId: "54659205691",
+  appId: "1:54659205691:web:50402b5e81fe07a536aa1e"
+};
+
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
