@@ -47,8 +47,8 @@ header { display: flex; justify-content: space-between; align-items: center; pad
 
 .details-area { display: none; padding-top: 12px; border-top: 1.5px dashed var(--border); animation: fadeIn 0.3s; }
 .details-row { display: flex; gap: 8px; margin-bottom: 12px; align-items: center; flex-wrap: wrap; }
-.details-row label { font-size: 12px; color: var(--text-sec); font-weight: 600; display: flex; align-items: center; gap: 6px; }
-.details-row input[type="date"] { padding: 6px 10px; border: 1px solid var(--border); border-radius: 6px; font-size: 12px; outline: none; }
+.details-row label { flex: 1; display: flex; flex-direction: column; gap: 4px; align-items: flex-start; font-size: 12px; color: var(--text-sec); font-weight: 600; }
+input[type="datetime-local"] { padding: 8px 10px; border: 1px solid var(--border); border-radius: 8px; font-size: 13px; outline: none; font-family: inherit; width: 100%; }
 .type-pill { font-size: 11px; padding: 4px 10px; background: #f1f5f9; border-radius: 12px; cursor: pointer; border: 1px solid var(--border); color: var(--text-sec); }
 .type-pill.selected { background: var(--primary); color: white; border-color: var(--primary); }
 .notes-container { margin-top: 12px; }
@@ -90,7 +90,7 @@ header { display: flex; justify-content: space-between; align-items: center; pad
 
 /* 🛒 商店區：搜尋與九宮格 */
 .back-btn { background: none; border: none; color: var(--text-sec); font-weight: bold; font-size: 15px; margin-bottom: 20px; cursor: pointer; }
-#screen-store, #screen-settings { padding: 20px; }
+#screen-store, #screen-collection, #screen-settings { padding: 20px; }
 .store-box, .settings-box { background: #f8fafc; border: 1px solid var(--border); border-radius: 12px; padding: 20px; }
 .store-box h2, .settings-box h2 { margin-bottom: 8px; font-size: 18px; color: var(--text-main); }
 .store-box p { color: var(--text-sec); font-size: 13px; margin-bottom: 16px; }
@@ -98,6 +98,10 @@ header { display: flex; justify-content: space-between; align-items: center; pad
 .search-bar { display: flex; gap: 8px; margin-bottom: 24px; }
 .search-bar input { flex-grow: 1; padding: 10px; border: 1px solid var(--border); border-radius: 8px; font-size: 14px; outline: none; }
 .search-btn { width: auto; padding: 10px 16px; }
+
+.friends-list { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; padding-top: 12px; border-top: 1px dashed var(--border); }
+.friend-pill { padding: 6px 12px; background: #e0e7ff; color: var(--primary); border-radius: 20px; font-size: 13px; font-weight: 700; cursor: pointer; border: none; transition: 0.2s; }
+.friend-pill:hover { background: var(--primary); color: white; }
 
 .store-gallery { animation: fadeIn 0.4s; }
 .store-friend-title { font-size: 15px; text-align: center; margin-bottom: 16px; color: var(--text-sec); border-bottom: 1px solid var(--border); padding-bottom: 8px;}
@@ -126,37 +130,11 @@ header { display: flex; justify-content: space-between; align-items: center; pad
 .photo-gallery { display: flex; gap: 8px; flex-wrap: wrap; }
 .photo-thumb { width: 60px; height: 60px; border-radius: 8px; object-fit: cover; border: 2px solid var(--border); }
 
+/* 下載與輸入框優化 */
+#extra-photo-desc { width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: 8px; font-size: 14px; outline: none; margin-top: 12px; margin-bottom: 12px; transition: 0.3s; font-family: 'Nunito', sans-serif; }
+#extra-photo-desc:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(99,102,241,0.12); }
+.download-btn { background: #e2e8f0; color: #1e293b; border: none; padding: 6px; border-radius: 6px; font-size: 12px; margin-top: 6px; cursor: pointer; font-weight: 700; width: 100%; transition: 0.2s; }
+.download-btn:hover { background: #cbd5e1; }
+
 .flying-coin { position: fixed; width: 30px; height: 30px; border-radius: 50%; background: var(--accent); border: 2px solid #fff; box-shadow: 0 4px 8px rgba(0,0,0,0.2); z-index: 9999; pointer-events: none; transition: all 0.6s cubic-bezier(0.25, 1, 0.5, 1); display: flex; align-items: center; justify-content: center; font-size: 16px; }
 @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
-#extra-photo-desc {
-    width: 100%;
-    padding: 12px;
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    font-size: 14px;
-    outline: none;
-    margin-top: 12px;
-    margin-bottom: 12px;
-    transition: 0.3s;
-    font-family: 'Nunito', sans-serif;
-}
-#extra-photo-desc:focus {
-    border-color: var(--primary);
-    box-shadow: 0 0 0 3px rgba(99,102,241,0.12);
-}
-
-/* 下載按鈕的樣式 (給第二題用的) */
-.download-btn {
-    background: #e2e8f0; 
-    color: #1e293b; 
-    border: none; 
-    padding: 6px; 
-    border-radius: 6px; 
-    font-size: 12px; 
-    margin-top: 6px; 
-    cursor: pointer; 
-    font-weight: 700; 
-    width: 100%;
-    transition: 0.2s;
-}
-.download-btn:hover { background: #cbd5e1; }
