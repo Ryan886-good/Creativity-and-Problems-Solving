@@ -34,7 +34,7 @@ const quadrantVarMap = {
     "重要且緊急": "--q1-color", "重要不緊急": "--q2-color",
     "不重要且緊急": "--q3-color", "不重要不緊急": "--q4-color"
 };
-const PX_PER_DAY = 100; // 擴大每日像素，讓時間錯開更明顯
+const PX_PER_DAY = 100; 
 const TIMELINE_START_OFFSET = 40;
 
 function switchScreen(screenId) {
@@ -44,10 +44,16 @@ function switchScreen(screenId) {
 document.querySelectorAll('.back-to-tasks').forEach(btn => {
     btn.addEventListener('click', () => switchScreen('screen-tasks'));
 });
-document.getElementById('btn-settings').addEventListener('click', () => {
+
+// 新版底部雙導航
+document.getElementById('btn-go-store').addEventListener('click', () => switchScreen('screen-store'));
+document.getElementById('btn-go-settings').addEventListener('click', () => {
     loadSettings();
+    document.getElementById('setting-my-id').innerText = currentUser.uid;
+    document.getElementById('setting-nickname-input').value = currentUser.name;
     switchScreen('screen-settings');
 });
+
 document.getElementById('back-to-store-from-collection').addEventListener('click', () => switchScreen('screen-store'));
 
 // ==========================================
@@ -138,7 +144,8 @@ function loginSuccess(uid, name) {
     currentUser.uid = uid;
     currentUser.name = name;
     document.getElementById('coin-count').innerText = currentUser.coins;
-    document.getElementById('my-uid-display').innerText = `我的 ID: ${currentUser.uid}`;
+    // 顯示暱稱而非 ID
+    document.getElementById('my-nickname-display').innerText = `👤 ${currentUser.name}`;
     document.getElementById('app-header').classList.remove('hidden');
     switchScreen('screen-tasks');
     renderTimeline();
@@ -146,7 +153,7 @@ function loginSuccess(uid, name) {
 }
 
 // ==========================================
-// 4. 任務建立與時間軸 (完美強制左右排序版)
+// 4. 任務建立與時間軸 (超炫飛入動畫版)
 // ==========================================
 let selectedType = "報告";
 let selectedQuadrant = "重要不緊急";
@@ -169,9 +176,7 @@ document.querySelectorAll('.quadrant').forEach(el => el.addEventListener('click'
 }));
 
 async function saveTasksToCloud() {
-    try {
-        await updateDoc(doc(db, "users", currentUser.uid), { tasks: tasks });
-    } catch(e) { console.error("任務同步失敗", e); }
+    try { await updateDoc(doc(db, "users", currentUser.uid), { tasks: tasks }); } catch(e) {}
 }
 
 document.getElementById('submit-btn').addEventListener('click', async () => {
@@ -189,21 +194,55 @@ document.getElementById('submit-btn').addEventListener('click', async () => {
         const index = tasks.findIndex(t => t.id === editingTaskId);
         tasks[index] = { ...tasks[index], ...taskData };
         exitEditMode();
+        renderTimeline();
     } else {
         taskData.id = Date.now();
+        taskData.isNew = true; // 標記為新任務準備動畫
         tasks.push(taskData);
+        
+        // 收起面板
+        document.getElementById('details-area').style.display = 'none';
+        document.getElementById('toggle-btn').innerText = '▼ 詳細設定';
+        document.getElementById('task-name').value = ''; 
+        document.getElementById('task-notes').value = '';
+
+        renderTimeline(); // 渲染後會把 isNew 的卡片設為透明
+        
+        // 執行飛入動畫
+        const realCard = document.getElementById(`card-${taskData.id}`);
+        if(realCard) {
+            const rect = realCard.getBoundingClientRect();
+            
+            // 建立虛擬旋轉卡牌
+            const flyingCard = document.createElement('div');
+            flyingCard.className = 'task-card spin-anim';
+            flyingCard.style.position = 'fixed';
+            flyingCard.style.zIndex = '9999';
+            flyingCard.style.left = '50%';
+            flyingCard.style.top = '40%'; // 螢幕正中央偏上
+            flyingCard.style.background = `var(${quadrantVarMap[taskData.quadrant]})`;
+            document.body.appendChild(flyingCard);
+
+            setTimeout(() => {
+                // 停止旋轉，開始飛向目標
+                flyingCard.classList.remove('spin-anim');
+                flyingCard.style.transition = 'all 0.6s cubic-bezier(0.25, 1, 0.5, 1)';
+                flyingCard.style.left = `${rect.left + rect.width/2}px`;
+                flyingCard.style.top = `${rect.top + rect.height/2}px`;
+                flyingCard.style.transform = 'translate(-50%, -50%) scale(1)';
+                
+                flyingCard.addEventListener('transitionend', () => {
+                    flyingCard.remove();
+                    realCard.style.opacity = '1'; // 讓真的卡牌顯現
+                    taskData.isNew = false;
+                }, {once: true});
+            }, 600); // 旋轉 0.6 秒後飛走
+        }
     }
     
     await saveTasksToCloud(); 
-    document.getElementById('task-name').value = '';
-    document.getElementById('task-notes').value = '';
-    renderTimeline();
-    
-    document.getElementById('details-area').style.display = 'none';
-    document.getElementById('toggle-btn').innerText = '▼ 詳細設定';
 });
 
-// 核心時間軸渲染邏輯
 function renderTimeline() {
     const track = document.getElementById('timeline-track');
     const arrowHead = document.getElementById('arrow-head');
@@ -236,12 +275,9 @@ function renderTimeline() {
 
     if(tasks.length === 0) return;
 
-    // 1. 嚴格依據精確時間進行先後排序
     tasks.sort((a, b) => new Date(a.startStr) - new Date(b.startStr));
-
     const timeCounts = {};
     tasks.forEach(task => {
-        // 只以「完整的年月日時分」做堆疊計數，不再以「天」做堆疊
         if (!timeCounts[task.startStr]) timeCounts[task.startStr] = 0;
         timeCounts[task.startStr]++;
     });
@@ -256,28 +292,20 @@ function renderTimeline() {
         let calculatedLeft = TIMELINE_START_OFFSET + (diffDaysFloat * PX_PER_DAY);
 
         if (task.startStr === lastTime) {
-            // 只有當時間「完全一模一樣(連分鐘都相同)」時，才會在同一個X軸上下堆疊
             currentStackIndex++;
             task.leftPos = currentLeft; 
         } else {
-            // 時間不同，強制往右移！即使只差1分鐘，也強制確保至少有 16px 的左右間距
-            if (lastTime !== null && calculatedLeft < currentLeft + 16) {
-                calculatedLeft = currentLeft + 16;
-            }
+            if (lastTime !== null && calculatedLeft < currentLeft + 16) calculatedLeft = currentLeft + 16;
             currentLeft = calculatedLeft;
             task.leftPos = calculatedLeft;
-            currentStackIndex = 0; // 重置高度
+            currentStackIndex = 0; 
         }
-        
         task.stackIndex = currentStackIndex;
         lastTime = task.startStr;
     });
 
     const maxLeft = tasks[tasks.length - 1].leftPos;
-    const requiredWidth = Math.max(
-        TIMELINE_START_OFFSET + (maxMonths * 30 * PX_PER_DAY) + 60,
-        maxLeft + 100
-    );
+    const requiredWidth = Math.max(TIMELINE_START_OFFSET + (maxMonths * 30 * PX_PER_DAY) + 60, maxLeft + 100);
     track.style.width = `${requiredWidth}px`;
     arrowHead.style.left = `${requiredWidth - 10}px`;
 
@@ -287,12 +315,20 @@ function renderTimeline() {
         
         const card = document.createElement('div');
         card.className = 'task-card';
+        card.id = `card-${task.id}`;
         card.style.background = `var(${quadrantVarMap[task.quadrant]})`;
         card.style.left = `${task.leftPos}px`;
+        card.style.top = `${topPos}%`;
         card.title = `${task.name}\n開始: ${task.startStr.replace('T', ' ')}`; 
         
+        // 如果是剛飛入的新任務，先保持透明
+        if(task.isNew) {
+            card.style.opacity = '0';
+        } else {
+            setTimeout(() => { card.style.opacity = '1'; }, 50);
+        }
+        
         track.appendChild(card);
-        setTimeout(() => { card.style.top = `${topPos}%`; card.style.opacity = '1'; }, 50);
         card.addEventListener('click', () => openPanel(task));
     });
 }
@@ -340,7 +376,7 @@ document.getElementById('task-edit-btn').addEventListener('click', () => {
 function exitEditMode() {
     editingTaskId = null;
     document.querySelector('.input-container').classList.remove('editing-mode');
-    document.getElementById('submit-btn').innerText = '確定飛入';
+    document.getElementById('submit-btn').innerText = '🚀 確定飛入時間軸';
     document.getElementById('cancel-edit-btn').classList.add('hidden');
     document.getElementById('task-name').value = ''; document.getElementById('task-notes').value = '';
 }
@@ -360,11 +396,9 @@ document.getElementById('task-complete-btn').addEventListener('click', async (e)
     
     coin.addEventListener('transitionend', async () => {
         coin.remove();
-        currentUser.coins+=1; 
+        currentUser.coins += 1; 
         document.getElementById('coin-count').innerText = currentUser.coins;
-        try {
-            await updateDoc(doc(db, "users", currentUser.uid), { coins: currentUser.coins });
-        } catch(e) { console.error("硬幣同步失敗", e); }
+        try { await updateDoc(doc(db, "users", currentUser.uid), { coins: currentUser.coins }); } catch(e) {}
     }, { once: true });
 
     document.getElementById('info-panel').style.display = 'none';
@@ -376,7 +410,6 @@ document.getElementById('task-complete-btn').addEventListener('click', async (e)
 // ==========================================
 // 5. 加入好友與戰利品收集櫃
 // ==========================================
-document.getElementById('btn-go-store').addEventListener('click', () => switchScreen('screen-store'));
 document.getElementById('btn-collection').addEventListener('click', () => {
     renderCollectionGrid();
     switchScreen('screen-collection');
@@ -506,7 +539,7 @@ function renderCollectionGrid() {
     const validPhotos = currentUser.unlockedPhotos.filter(p => typeof p === 'object' && p.url);
 
     if (validPhotos.length === 0) {
-        grid.innerHTML = '<span style="grid-column: span 3; font-size: 13px; color: gray;">你還沒有解鎖任何照片喔！（舊版解鎖的無法顯示）</span>';
+        grid.innerHTML = '<span style="grid-column: span 3; font-size: 13px; color: gray;">你還沒有解鎖任何照片喔！</span>';
         return;
     }
 
@@ -548,7 +581,7 @@ async function forceDownload(url, filename) {
 }
 
 // ==========================================
-// 6. 設定頁面與登出
+// 6. 設定頁面與帳號功能
 // ==========================================
 async function loadSettings() {
     try {
@@ -609,6 +642,28 @@ document.getElementById('btn-add-extra-photo').addEventListener('click', async (
         await loadSettings(); 
         alert('照片擴充成功！');
     } catch (error) { console.error(error); }
+});
+
+// 複製 ID 功能
+document.getElementById('btn-copy-id').addEventListener('click', () => {
+    navigator.clipboard.writeText(currentUser.uid).then(() => {
+        alert("ID 已經複製到剪貼簿囉！");
+    });
+});
+
+// 儲存修改暱稱
+document.getElementById('btn-save-nickname').addEventListener('click', async () => {
+    const newName = document.getElementById('setting-nickname-input').value.trim();
+    if (!newName) return alert("暱稱不能為空！");
+    
+    try {
+        await updateDoc(doc(db, "users", currentUser.uid), { name: newName });
+        currentUser.name = newName;
+        document.getElementById('my-nickname-display').innerText = `👤 ${newName}`;
+        alert("暱稱修改成功！");
+    } catch (e) {
+        console.error("暱稱修改失敗", e);
+    }
 });
 
 document.getElementById('btn-logout').addEventListener('click', () => {
