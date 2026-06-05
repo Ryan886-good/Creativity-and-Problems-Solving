@@ -562,7 +562,7 @@ function renderCollectionGrid() {
     const validPhotos = currentUser.unlockedPhotos.filter(p => typeof p === 'object' && p.url);
 
     if (validPhotos.length === 0) {
-        grid.innerHTML = '<span style="grid-column: span 3; font-size: 13px; color: var(--text-sec); font-weight:800;">你還沒有解鎖任何照片喔！（舊版解鎖的無法顯示）</span>';
+        grid.innerHTML = '<span style="grid-column: span 3; font-size: 13px; color: var(--text-sec); font-weight:800;">你還沒有解鎖任何照片喔！</span>';
         return;
     }
 
