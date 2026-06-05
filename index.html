@@ -5,8 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Toplan</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700&family=DM+Mono:wght@400&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=DM+Mono:wght@400&display=swap" rel="stylesheet">    <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
@@ -25,27 +24,31 @@
         <section id="screen-login" class="screen active">
             <div class="login-box">
                 <div class="auth-toggle">
-                    <button id="tab-login" class="active">登入</button>
-                    <button id="tab-register">註冊</button>
+                    <button id="tab-login" class="active">LOGIN</button>
+                    <button id="tab-register">REGISTER</button>
                 </div>
                 
-                <h2 id="auth-title">📸 歡迎回來</h2>
-                <p id="auth-subtitle">輸入帳號密碼進入系統</p>
+                <div class="login-watermark">📅</div>
 
-                <input type="text" id="username-input" placeholder="輸入你的帳號 (ID)">
-                <input type="password" id="password-input" placeholder="輸入密碼">
-                
-                <div id="register-fields" class="hidden">
-                    <input type="text" id="nickname-input" placeholder="輸入你的對外暱稱">
-                    <div class="upload-area">
-                        <label for="photo-upload" class="upload-btn">➕ 選擇首張醜照</label>
-                        <input type="file" id="photo-upload" accept="image/*" style="display: none;">
-                        <div id="upload-preview" class="preview-box">尚無照片</div>
-                        <input type="text" id="photo-desc-input" placeholder="為這張醜照加上敘述，吸引朋友來買 (必填)">
+                <div class="login-form-container">
+                    <h2 id="auth-title">WELCOME!</h2>
+                    <p id="auth-subtitle" class="hidden"></p>
+
+                    <input type="text" id="username-input" placeholder="ACCOUNT(ID)">
+                    <input type="password" id="password-input" placeholder="PASSWORD">
+                    
+                    <div id="register-fields" class="hidden">
+                        <input type="text" id="nickname-input" placeholder="暱稱">
+                        <div class="upload-area">
+                            <label for="photo-upload" class="upload-btn">➕ CHOOSE PHOTO</label>
+                            <input type="file" id="photo-upload" accept="image/*" style="display: none;">
+                            <div id="upload-preview" class="preview-box">NO PHOTO</div>
+                            <input type="text" id="photo-desc-input" placeholder="PHOTO DESCRIPTION (為圖片加上解說)">
+                        </div>
                     </div>
                 </div>
 
-                <button id="btn-auth-submit" class="primary-btn">Let's go!</button>
+                <button id="btn-auth-submit" class="primary-btn">LET'S GO</button>
             </div>
         </section>
 

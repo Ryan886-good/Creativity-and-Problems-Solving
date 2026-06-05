@@ -63,6 +63,8 @@ document.getElementById('tab-login').addEventListener('click', function() {
     authMode = 'login';
     this.classList.add('active');
     document.getElementById('tab-register').classList.remove('active');
+    // 更新為英文版標題
+    document.getElementById('auth-title').innerText = 'WELCOME!';
     document.getElementById('register-fields').classList.add('hidden');
 });
 
@@ -70,6 +72,8 @@ document.getElementById('tab-register').addEventListener('click', function() {
     authMode = 'register';
     this.classList.add('active');
     document.getElementById('tab-login').classList.remove('active');
+    // 更新為英文版標題
+    document.getElementById('auth-title').innerText = 'REGISTER!';
     document.getElementById('register-fields').classList.remove('hidden');
 });
 

@@ -27,16 +27,161 @@ header { display: flex; justify-content: space-between; align-items: center; pad
 .secondary-btn { width: 100%; padding: 10px; background: var(--secondary); color: white; border: none; border-radius: 8px; font-weight: 800; cursor: pointer; }
 
 /* 登入註冊區 */
-#screen-login { padding: 30px 20px; text-align: center; }
-.auth-toggle { display: flex; background: #f1f5f9; border-radius: 8px; margin-bottom: 24px; padding: 4px; }
-.auth-toggle button { flex: 1; padding: 10px; border: none; background: none; border-radius: 6px; font-weight: 700; color: var(--text-sec); cursor: pointer; transition: 0.2s; }
-.auth-toggle button.active { background: white; color: var(--primary); box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
-.login-box h2 { margin-bottom: 8px; color: var(--text-main); }
-.login-box p { color: var(--text-sec); margin-bottom: 24px; font-size: 14px; }
-.login-box input[type="text"], .login-box input[type="password"] { width: 100%; padding: 12px; margin-bottom: 12px; border: 1px solid var(--border); border-radius: 8px; font-size: 15px; outline: none; }
-.upload-btn { display: inline-block; padding: 10px 20px; background: var(--secondary); color: white; border-radius: 8px; cursor: pointer; font-weight: bold; margin-bottom: 12px; }
-.preview-box { width: 100px; height: 100px; margin: 0 auto 12px; border: 2px dashed var(--border); border-radius: 12px; display: flex; align-items: center; justify-content: center; color: var(--text-sec); font-size: 12px; overflow: hidden; background: #f8fafc; }
-.preview-box img { width: 100%; height: 100%; object-fit: cover; }
+/* =========================================
+   登入註冊區 (拿鐵主題)
+   ========================================= */
+#screen-login { 
+    background-color: #f7f2e8; /* 奶茶色背景 */
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+}
+.login-box { 
+    width: 100%;
+    height: 100%;
+    padding: 40px 30px; 
+    text-align: center; 
+    display: flex;
+    flex-direction: column;
+    position: relative;
+}
+
+/* 頂部藥丸切換鈕 */
+.auth-toggle { 
+    display: flex; 
+    background: #816b51; /* 咖啡色底 */
+    border-radius: 30px; 
+    margin-bottom: 40px; 
+    padding: 6px; 
+    position: relative;
+    z-index: 10;
+}
+.auth-toggle button { 
+    flex: 1; 
+    padding: 12px; 
+    border: none; 
+    background: transparent; 
+    border-radius: 24px; 
+    font-weight: 900; 
+    font-size: 15px;
+    color: #f7f2e8; 
+    cursor: pointer; 
+    transition: 0.3s; 
+    font-family: 'Nunito', sans-serif;
+    letter-spacing: 1px;
+}
+.auth-toggle button.active { 
+    background: #f7f2e8; 
+    color: #816b51; 
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1); 
+}
+
+/* 背景浮水印 */
+.login-watermark {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 200px;
+    opacity: 0.04;
+    pointer-events: none;
+    z-index: 0;
+}
+
+/* 表單容器排版 */
+.login-form-container {
+    position: relative;
+    z-index: 10;
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.login-box h2 { 
+    margin-bottom: 30px; 
+    color: #715c43; 
+    font-size: 28px;
+    font-weight: 900;
+    letter-spacing: 2px;
+}
+
+/* 隱藏舊版副標題 */
+.login-box p#auth-subtitle { display: none; }
+
+/* 圓潤輸入框 */
+.login-box input[type="text"], .login-box input[type="password"] { 
+    width: 100%; 
+    padding: 18px 20px; 
+    margin-bottom: 16px; 
+    border: 2px solid #d0c2b2; 
+    border-radius: 16px; 
+    font-size: 14px; 
+    font-weight: 800;
+    outline: none; 
+    background: #ffffff;
+    color: #715c43;
+    font-family: 'Nunito', sans-serif;
+    transition: 0.3s;
+}
+.login-box input::placeholder {
+    color: #c0b2a0;
+    font-weight: 800;
+}
+.login-box input:focus {
+    border-color: #816b51;
+    box-shadow: 0 0 0 3px rgba(129, 107, 81, 0.1);
+}
+
+/* 大按鈕 LET'S GO */
+.login-box #btn-auth-submit {
+    background: #816b51;
+    color: #ffffff;
+    border-radius: 16px;
+    padding: 18px;
+    font-size: 20px;
+    font-weight: 900;
+    letter-spacing: 2px;
+    border: none;
+    margin-top: auto;
+    margin-bottom: 20px;
+    position: relative;
+    z-index: 10;
+    cursor: pointer;
+    transition: 0.2s;
+    font-family: 'Nunito', sans-serif;
+}
+.login-box #btn-auth-submit:hover {
+    background: #6a5740;
+}
+
+/* 註冊區特定元素修正 */
+.login-box .upload-btn {
+    display: inline-block;
+    padding: 12px 20px;
+    background: #d0c2b2;
+    color: #6a5740;
+    border-radius: 12px;
+    font-weight: 900;
+    cursor: pointer;
+    margin-bottom: 12px;
+}
+.login-box .preview-box {
+    width: 100px; 
+    height: 100px; 
+    margin: 0 auto 12px; 
+    border: 2px dashed #d0c2b2; 
+    border-radius: 12px; 
+    display: flex; 
+    align-items: center; 
+    justify-content: center; 
+    color: #bfaea0; 
+    font-size: 12px; 
+    font-weight: 800;
+    overflow: hidden; 
+    background: #ffffff; 
+}
+.login-box .preview-box img { width: 100%; height: 100%; object-fit: cover; }
 
 /* 任務區容器：改用 Flex 確保順序 */
 #screen-tasks { 
