@@ -19,7 +19,7 @@ const db = getFirestore(app);
 const storage = getStorage(app);
 
 // ==========================================
-// 2. 全域變數
+// 2. 全域變數 & 初始化自訂日曆
 // ==========================================
 let currentUser = { uid: null, name: "", coins: 1000, unlockedPhotos: [], friends: [], tasks: [] }; 
 let tempPhotoDataUrl = ""; 
@@ -35,9 +35,16 @@ const quadrantVarMap = {
     "不重要且緊急": "--q3-color", "不重要不緊急": "--q4-color"
 };
 
-// 🟢 關鍵修正 1：改回最適合手機的比例，避免產生過長的空白帶
 const PX_PER_DAY = 30; 
 const TIMELINE_START_OFFSET = 40;
+
+// 🟢 啟動 Flatpickr
+flatpickr(".custom-datepicker", {
+    enableTime: true,
+    dateFormat: "Y-m-d\\TH:i",
+    time_24hr: true,
+    disableMobile: true 
+});
 
 function switchScreen(screenId) {
     document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden'));
@@ -47,7 +54,6 @@ document.querySelectorAll('.back-to-tasks').forEach(btn => {
     btn.addEventListener('click', () => switchScreen('screen-tasks'));
 });
 
-// 新版底部雙導航
 document.getElementById('btn-go-store').addEventListener('click', () => switchScreen('screen-store'));
 document.getElementById('btn-go-settings').addEventListener('click', () => {
     loadSettings();
@@ -104,7 +110,11 @@ document.getElementById('btn-auth-submit').addEventListener('click', async () =>
                 currentUser.coins = userData.coins !== undefined ? userData.coins : 1000; 
                 currentUser.unlockedPhotos = userData.unlockedPhotos || [];
                 currentUser.friends = userData.friends || [];
+                
+                // 🟢 核心修復：讀取時強制把所有隱形的任務現形！
                 tasks = userData.tasks || [];
+                tasks.forEach(t => t.isNew = false); 
+                
                 loginSuccess(username, userData.name);
             } else {
                 alert('帳號不存在或密碼錯誤！');
@@ -156,7 +166,7 @@ function loginSuccess(uid, name) {
 }
 
 // ==========================================
-// 4. 任務建立與時間軸 (超炫飛入動畫版)
+// 4. 任務建立與時間軸
 // ==========================================
 let selectedType = "報告";
 let selectedQuadrant = "重要不緊急";
@@ -178,8 +188,18 @@ document.querySelectorAll('.quadrant').forEach(el => el.addEventListener('click'
     selectedQuadrant = this.dataset.quadrant;
 }));
 
+// 🟢 核心修復：存檔時，拔除所有會污染資料庫的暫存屬性 (isNew, leftPos, stackIndex)
 async function saveTasksToCloud() {
-    try { await updateDoc(doc(db, "users", currentUser.uid), { tasks: tasks }); } catch(e) {}
+    const cleanTasks = tasks.map(t => ({
+        id: t.id,
+        name: t.name,
+        startStr: t.startStr,
+        endStr: t.endStr,
+        type: t.type,
+        quadrant: t.quadrant,
+        notes: t.notes
+    }));
+    try { await updateDoc(doc(db, "users", currentUser.uid), { tasks: cleanTasks }); } catch(e) { console.error(e); }
 }
 
 document.getElementById('submit-btn').addEventListener('click', async () => {
@@ -233,7 +253,7 @@ document.getElementById('submit-btn').addEventListener('click', async () => {
                 flyingCard.addEventListener('transitionend', () => {
                     flyingCard.remove();
                     realCard.style.opacity = '1'; 
-                    taskData.isNew = false;
+                    taskData.isNew = false; // 記憶體內解除新卡片狀態
                 }, {once: true});
             }, 600); 
         }
@@ -272,7 +292,6 @@ function renderTimeline() {
         track.appendChild(marker);
     }
 
-    // 🟢 關鍵修正 2：就算沒有任務，也要設定初始的空時間軸寬度
     if(tasks.length === 0) {
         const requiredWidth = TIMELINE_START_OFFSET + (maxMonths * 30 * PX_PER_DAY) + 60;
         track.style.width = `${requiredWidth}px`;
@@ -560,7 +579,7 @@ function renderCollectionGrid() {
         `;
 
         item.querySelector('.download-btn').addEventListener('click', (e) => {
-            forceDownload(photoObj.url, `醜照戰利品_${photoObj.id}.png`);
+            forceDownload(photoObj.url, `照片戰利品_${photoObj.id}.png`);
         });
         grid.appendChild(item);
     });
@@ -648,14 +667,12 @@ document.getElementById('btn-add-extra-photo').addEventListener('click', async (
     } catch (error) { console.error(error); }
 });
 
-// 複製 ID 功能
 document.getElementById('btn-copy-id').addEventListener('click', () => {
     navigator.clipboard.writeText(currentUser.uid).then(() => {
         alert("ID 已經複製到剪貼簿囉！");
     });
 });
 
-// 儲存修改暱稱
 document.getElementById('btn-save-nickname').addEventListener('click', async () => {
     const newName = document.getElementById('setting-nickname-input').value.trim();
     if (!newName) return alert("暱稱不能為空！");

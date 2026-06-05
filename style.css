@@ -1,24 +1,23 @@
 :root {
-    /* 拿鐵主題色系 */
-    --bg-color: #f7f2e8; /* 奶茶背景 */
+    --bg-color: #f7f2e8; 
     --app-bg: #ffffff; 
-    --primary: #816b51; /* 咖啡色主色 */
+    --primary: #816b51; 
     --primary-hover: #6a5740;
-    --accent: #a58e74; /* 點綴色 */
-    --secondary: #d0c2b2; /* 淺卡其邊框 */
-    --text-main: #715c43; /* 深褐文字 */
-    --text-sec: #9d8c7c; /* 淺褐文字 */
-    --border: #e3dbd1; /* 柔和邊框 */
+    --accent: #a58e74; 
+    --secondary: #d0c2b2; 
+    --text-main: #715c43; 
+    --text-sec: #9d8c7c; 
+    --border: #e3dbd1; 
     --radius: 16px; 
     --radius-sm: 12px;
     
-    /* 降低飽和度的莫蘭迪色四象限，完美契合拿鐵風 */
-    --q1-color: #d97b7b; /* 珊瑚紅 */
-    --q2-color: #dca763; /* 焦糖橘 */
-    --q3-color: #79b08e; /* 抹茶綠 */
-    --q4-color: #769bc9; /* 灰藍 */
+    --q1-color: #d97b7b; 
+    --q2-color: #dca763; 
+    --q3-color: #79b08e; 
+    --q4-color: #769bc9; 
 }
 
+/* 恢復使用 Nunito 字體 */
 * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Nunito', sans-serif; }
 body { background-color: var(--bg-color); display: flex; justify-content: center; align-items: center; min-height: 100vh; }
 
@@ -32,24 +31,22 @@ header { display: flex; justify-content: space-between; align-items: center; pad
 .screen { flex-grow: 1; overflow-y: auto; overflow-x: hidden; position: relative; }
 .active { display: block; } .hidden { display: none !important; }
 
-/* 圓潤按鈕 */
 .primary-btn { width: 100%; padding: 16px; background: var(--primary); color: white; border: none; border-radius: 14px; font-weight: 900; cursor: pointer; font-size: 16px; letter-spacing: 1px; transition: 0.2s;}
 .primary-btn:hover { background: var(--primary-hover); }
 .secondary-btn { width: 100%; padding: 12px; background: var(--secondary); color: var(--text-main); border: none; border-radius: 12px; font-weight: 800; cursor: pointer; transition: 0.2s;}
 .secondary-btn:hover { background: #c2b2a0; }
 
-/* 圓潤輸入框 */
-input[type="text"], input[type="password"], input[type="datetime-local"], textarea {
-    width: 100%; padding: 14px 16px; margin-bottom: 12px; border: 2px solid var(--border); border-radius: 12px; font-size: 14px; font-weight: 800; outline: none; background: #ffffff; color: var(--text-main); font-family: 'Nunito', sans-serif; transition: 0.3s;
+/* 🟢 手機防破版修復與輸入框設定 */
+input[type="text"], input[type="password"], textarea {
+    width: 100%; padding: 14px 16px; margin-bottom: 12px; border: 2px solid var(--border); border-radius: 12px; font-size: 14px; font-weight: 800; outline: none; background: #ffffff; color: var(--text-main); font-family: inherit; transition: 0.3s; box-sizing: border-box; max-width: 100%;
 }
 input::placeholder, textarea::placeholder { color: #c0b2a0; font-weight: 800; }
 input:focus, textarea:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(129, 107, 81, 0.1); }
 
-/* 登入註冊區 (拿鐵主題) */
 #screen-login { background-color: var(--bg-color); padding: 0; display: flex; flex-direction: column; }
 .login-box { width: 100%; height: 100%; padding: 40px 30px; text-align: center; display: flex; flex-direction: column; position: relative; }
 .auth-toggle { display: flex; background: var(--primary); border-radius: 30px; margin-bottom: 40px; padding: 6px; position: relative; z-index: 10; }
-.auth-toggle button { flex: 1; padding: 12px; border: none; background: transparent; border-radius: 24px; font-weight: 900; font-size: 15px; color: var(--bg-color); cursor: pointer; transition: 0.3s; letter-spacing: 1px; }
+.auth-toggle button { flex: 1; padding: 12px; border: none; background: transparent; border-radius: 24px; font-weight: 900; font-size: 15px; color: var(--bg-color); cursor: pointer; transition: 0.3s; letter-spacing: 1px; font-family: inherit; }
 .auth-toggle button.active { background: var(--bg-color); color: var(--primary); box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
 .login-watermark { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 200px; opacity: 0.04; pointer-events: none; z-index: 0; }
 .login-form-container { position: relative; z-index: 10; flex-grow: 1; display: flex; flex-direction: column; justify-content: center; }
@@ -60,19 +57,21 @@ input:focus, textarea:focus { border-color: var(--primary); box-shadow: 0 0 0 3p
 .preview-box { width: 100px; height: 100px; margin: 0 auto 12px; border: 2px dashed var(--secondary); border-radius: 12px; display: flex; align-items: center; justify-content: center; color: var(--text-sec); font-size: 12px; font-weight: 800; overflow: hidden; background: #ffffff; }
 .preview-box img { width: 100%; height: 100%; object-fit: cover; }
 
-/* 任務區 */
 #screen-tasks { background: var(--bg-color); padding: 16px 12px 20px; display: flex; flex-direction: column; } 
 .input-container { background: var(--app-bg); padding: 16px; border-radius: var(--radius); box-shadow: 0 4px 15px rgba(113, 92, 67, 0.05); border: 2px solid var(--border); margin-bottom: 16px; transition: 0.3s;}
 .input-container.editing-mode { border: 2px solid var(--q1-color); box-shadow: 0 4px 15px rgba(217, 123, 123, 0.2); }
 .main-input { display: flex; gap: 8px; margin-bottom: 12px; }
 .action-btns { display: flex; gap: 8px; }
-.action-btns button { padding: 10px 12px; border: none; border-radius: var(--radius-sm); font-weight: 800; font-size: 13px; cursor: pointer; flex-grow: 1; }
+.action-btns button { padding: 10px 12px; border: none; border-radius: var(--radius-sm); font-weight: 800; font-size: 13px; cursor: pointer; flex-grow: 1; font-family: inherit;}
 #toggle-btn { background: var(--secondary); color: var(--text-main); }
 #cancel-edit-btn { background: var(--q1-color); color: white; }
 
 .details-area { display: none; padding-top: 16px; border-top: 2px dashed var(--border); animation: fadeIn 0.3s; margin-top: 12px;}
 .details-row { display: flex; gap: 8px; margin-bottom: 12px; align-items: center; flex-wrap: wrap; }
-.details-row label { flex: 1; display: flex; flex-direction: column; gap: 4px; align-items: flex-start; font-size: 13px; color: var(--text-main); font-weight: 800; }
+
+/* 🟢 手機防破版：解除 Flex 預設寬度限制 */
+.details-row label { flex: 1 1 100%; display: flex; flex-direction: column; gap: 4px; align-items: flex-start; font-size: 14px; color: var(--text-main); font-weight: 800; min-width: 0; max-width: 100%;}
+
 .type-pill { font-size: 12px; padding: 6px 12px; background: var(--bg-color); border-radius: 12px; cursor: pointer; border: 2px solid var(--border); color: var(--text-sec); font-weight: 800;}
 .type-pill.selected { background: var(--primary); color: white; border-color: var(--primary); }
 .notes-container { margin-top: 12px; }
@@ -92,7 +91,6 @@ input:focus, textarea:focus { border-color: var(--primary); box-shadow: 0 0 0 3p
 }
 .spin-anim { animation: spinPulse 0.5s linear forwards; }
 
-/* 時間軸 */
 .timeline-wrapper { width: 100%; overflow-x: auto; padding: 40px 0; scrollbar-width: none; position: relative; flex-grow: 1; min-height: 200px; }
 .timeline-wrapper::-webkit-scrollbar { display: none; }
 .timeline-track { min-width: 300px; height: 140px; position: relative; transition: width 0.3s; }
@@ -102,13 +100,11 @@ input:focus, textarea:focus { border-color: var(--primary); box-shadow: 0 0 0 3p
 .task-card { position: absolute; width: 10px; height: 30px; border-radius: 6px; box-shadow: 0 2px 6px rgba(113,92,67,0.3); cursor: pointer; transition: all 0.3s; transform: translate(-50%, -50%); opacity: 0; border: 1.5px solid #fff; }
 .task-card:hover { transform: translate(-50%, -50%) scale(1.6); box-shadow: 0 6px 15px rgba(113,92,67,0.4); z-index: 20; }
 
-/* 底部雙導覽列 */
 .bottom-nav-container { display: flex; gap: 12px; margin-top: auto; z-index: 30; }
-.bottom-nav-btn { flex: 1; padding: 16px; background: var(--primary); color: #fff; border: none; border-radius: 14px; font-weight: 900; font-size: 15px; cursor: pointer; box-shadow: 0 4px 10px rgba(113,92,67,0.2); transition: 0.2s;}
+.bottom-nav-btn { flex: 1; padding: 16px; background: var(--primary); color: #fff; border: none; border-radius: 14px; font-weight: 900; font-size: 15px; cursor: pointer; box-shadow: 0 4px 10px rgba(113,92,67,0.2); transition: 0.2s; font-family: inherit;}
 .bottom-nav-btn.settings-color { background: #ffffff; color: var(--primary); border: 2px solid var(--primary); }
 .bottom-nav-btn:hover { filter: brightness(0.95); }
 
-/* 詳細資訊面板 */
 .info-panel { display: none; position: absolute; top: 45%; left: 50%; transform: translate(-50%, -50%); background: var(--app-bg); padding: 24px; border-radius: var(--radius); box-shadow: 0 10px 40px rgba(113,92,67,0.3); z-index: 100; width: 85%; border: 2px solid var(--border); }
 .info-panel h3 { font-size: 20px; margin-bottom: 4px; color: var(--text-main); font-weight: 900; border-bottom: 2px dashed var(--border); padding-bottom: 8px; }
 .panel-meta { font-size: 13px; color: var(--text-sec); margin: 8px 0 16px; font-weight: 800;}
@@ -117,14 +113,13 @@ input:focus, textarea:focus { border-color: var(--primary); box-shadow: 0 0 0 3p
 .panel-notes { margin-top: 10px; padding-top: 10px; border-top: 2px dashed var(--border); }
 #panel-notes-content { margin-top: 6px; color: var(--text-sec); white-space: pre-wrap; font-size: 13px; font-weight: 700;}
 .panel-actions { display: flex; gap: 8px; margin-bottom: 12px; }
-.edit-btn, .delete-btn { flex: 1; padding: 10px; border: none; border-radius: 10px; font-weight: 800; cursor: pointer; font-size: 14px; }
+.edit-btn, .delete-btn { flex: 1; padding: 10px; border: none; border-radius: 10px; font-weight: 800; cursor: pointer; font-size: 14px; font-family: inherit;}
 .edit-btn { background: var(--secondary); color: var(--text-main); }
 .delete-btn { background: #fce8e8; color: var(--q1-color); }
 .close-btn { position: absolute; top: 12px; right: 16px; cursor: pointer; font-weight: 900; font-size: 20px; color: var(--text-sec); }
-.complete-btn { background: var(--q3-color); color: white; width: 100%; padding: 14px; border: none; border-radius: 10px; font-weight: 900; cursor: pointer; font-size: 15px; }
+.complete-btn { background: var(--q3-color); color: white; width: 100%; padding: 14px; border: none; border-radius: 10px; font-weight: 900; cursor: pointer; font-size: 15px; font-family: inherit;}
 
-/* 🛒 商店與設定區 */
-.back-btn { background: none; border: none; color: var(--text-sec); font-weight: 900; font-size: 16px; margin-bottom: 20px; cursor: pointer; }
+.back-btn { background: none; border: none; color: var(--text-sec); font-weight: 900; font-size: 16px; margin-bottom: 20px; cursor: pointer; font-family: inherit;}
 #screen-store, #screen-collection, #screen-settings { padding: 20px; background: var(--bg-color); }
 .store-box, .settings-box { background: #ffffff; border: 2px solid var(--border); border-radius: 16px; padding: 20px; box-shadow: 0 4px 15px rgba(113,92,67,0.05);}
 .store-box h2, .settings-box h2 { margin-bottom: 8px; font-size: 20px; color: var(--text-main); font-weight: 900;}
@@ -133,7 +128,7 @@ input:focus, textarea:focus { border-color: var(--primary); box-shadow: 0 0 0 3p
 .search-bar { display: flex; gap: 8px; margin-bottom: 24px; }
 .search-btn { width: auto; padding: 10px 16px; border-radius: 12px; margin: 0;}
 .friends-list { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; padding-top: 16px; border-top: 2px dashed var(--border); }
-.friend-pill { padding: 8px 14px; background: var(--secondary); color: var(--text-main); border-radius: 20px; font-size: 13px; font-weight: 900; cursor: pointer; border: none; transition: 0.2s; }
+.friend-pill { padding: 8px 14px; background: var(--secondary); color: var(--text-main); border-radius: 20px; font-size: 13px; font-weight: 900; cursor: pointer; border: none; transition: 0.2s; font-family: inherit;}
 .friend-pill:hover { filter: brightness(0.9); }
 
 .store-gallery { animation: fadeIn 0.4s; }
@@ -148,7 +143,6 @@ input:focus, textarea:focus { border-color: var(--primary); box-shadow: 0 0 0 3p
 .store-item .price { font-size: 14px; font-weight: 900; color: var(--q2-color); margin-bottom: 2px; }
 .store-item .desc { font-size: 12px; color: var(--text-sec); font-weight: 800; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; line-height: 1.4;}
 
-/* 設定頁面專屬與帳號資訊 */
 .setting-group { margin-bottom: 24px; padding-bottom: 20px; border-bottom: 2px solid var(--border); }
 .setting-group h3 { font-size: 16px; margin-bottom: 12px; color: var(--text-main); font-weight: 900;}
 .color-setting-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; font-size: 14px; color: var(--text-sec); font-weight: 800; }
@@ -156,7 +150,7 @@ input:focus, textarea:focus { border-color: var(--primary); box-shadow: 0 0 0 3p
 .setting-hint { font-size: 13px; color: var(--text-sec); font-weight: 700; margin-bottom: 12px;}
 .photo-gallery { display: flex; gap: 10px; flex-wrap: wrap; }
 .photo-thumb { width: 70px; height: 70px; border-radius: 12px; object-fit: cover; border: 3px solid var(--border); }
-.download-btn { background: var(--secondary); color: var(--text-main); border: none; padding: 8px; border-radius: 8px; font-size: 13px; margin-top: 8px; cursor: pointer; font-weight: 900; width: 100%; transition: 0.2s; }
+.download-btn { background: var(--secondary); color: var(--text-main); border: none; padding: 8px; border-radius: 8px; font-size: 13px; margin-top: 8px; cursor: pointer; font-weight: 900; width: 100%; transition: 0.2s; font-family: inherit;}
 .download-btn:hover { background: #c2b2a0; }
 
 .account-info-box { background: var(--bg-color); padding: 16px; border-radius: 12px; border: 2px solid var(--border); }
@@ -164,7 +158,16 @@ input:focus, textarea:focus { border-color: var(--primary); box-shadow: 0 0 0 3p
 .account-label { font-weight: 800; color: var(--text-main); }
 .account-val { color: var(--text-sec); flex-grow: 1; margin-left: 8px; font-family: 'DM Mono', monospace; font-weight: 700;}
 .account-input { padding: 8px 12px; border: 2px solid var(--border); border-radius: 8px; font-size: 14px; outline: none; flex-grow: 1; margin-left: 8px;}
-.copy-btn { background: var(--secondary); border: none; padding: 6px 10px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 900; color: var(--text-main); }
+.copy-btn { background: var(--secondary); border: none; padding: 6px 10px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 900; color: var(--text-main); font-family: inherit;}
 
 .flying-coin { position: fixed; width: 34px; height: 34px; border-radius: 50%; background: var(--q2-color); border: 3px solid #fff; box-shadow: 0 4px 10px rgba(113,92,67,0.3); z-index: 9999; pointer-events: none; transition: all 0.6s cubic-bezier(0.25, 1, 0.5, 1); display: flex; align-items: center; justify-content: center; font-size: 18px; }
 @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+
+/* 🟢 將自訂日曆 Flatpickr 的外觀改造成拿鐵主題，且套用原本字體 */
+.flatpickr-calendar { font-family: 'Nunito', sans-serif !important; background: var(--app-bg) !important; border: 2px solid var(--border) !important; border-radius: 16px !important; box-shadow: 0 10px 25px rgba(113, 92, 67, 0.2) !important; }
+.flatpickr-day.selected, .flatpickr-day.startRange, .flatpickr-day.endRange, .flatpickr-day.selected.inRange, .flatpickr-day.startRange.inRange, .flatpickr-day.endRange.inRange, .flatpickr-day.selected:focus, .flatpickr-day.startRange:focus, .flatpickr-day.endRange:focus, .flatpickr-day.selected:hover, .flatpickr-day.startRange:hover, .flatpickr-day.endRange:hover, .flatpickr-day.selected.prevMonthDay, .flatpickr-day.startRange.prevMonthDay, .flatpickr-day.endRange.prevMonthDay, .flatpickr-day.selected.nextMonthDay, .flatpickr-day.startRange.nextMonthDay, .flatpickr-day.endRange.nextMonthDay { background: var(--primary) !important; border-color: var(--primary) !important; }
+.flatpickr-months .flatpickr-month { background: var(--primary) !important; border-top-left-radius: 14px; border-top-right-radius: 14px;}
+.flatpickr-current-month .flatpickr-monthDropdown-months { background: var(--primary) !important; }
+.flatpickr-weekdays { background: var(--primary) !important; }
+span.flatpickr-weekday { color: #fff !important; }
+.flatpickr-time input { color: var(--text-main) !important; font-weight: 800; font-family: inherit;}

@@ -4,12 +4,16 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Toplan</title>
+    <!-- 引入自訂日曆套件的 CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=DM+Mono:wght@400&display=swap" rel="stylesheet">    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=DM+Mono:wght@400&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
     <div class="app-container">
+        <!-- 頂部導覽列 -->
         <header id="app-header" class="hidden">
             <div class="user-info">
                 <span id="my-nickname-display">👤 暱稱載入中...</span>
@@ -19,6 +23,7 @@
             </div>
         </header>
 
+        <!-- 畫面 1：登入 / 註冊區 (拿鐵主題版) -->
         <section id="screen-login" class="screen active">
             <div class="login-box">
                 <div class="auth-toggle">
@@ -50,10 +55,11 @@
             </div>
         </section>
 
+        <!-- 畫面 2：任務主畫面 -->
         <section id="screen-tasks" class="screen hidden">
             <div class="input-container">
                 <div class="main-input">
-                    <input type="text" id="task-name" placeholder="請輸入目標名稱...">
+                    <input type="text" id="task-name" placeholder="請輸入任務名稱...">
                 </div>
                 <div class="action-btns">
                     <button id="toggle-btn">▼ 詳細設定</button>
@@ -61,9 +67,10 @@
                 </div>
 
                 <div class="details-area" id="details-area">
+                    <!-- 移除原生 datepicker，換成 custom-datepicker 讓 Flatpickr 接管 -->
                     <div class="details-row">
-                        <label>開始：<input type="datetime-local" id="task-start"></label>
-                        <label>結束：<input type="datetime-local" id="task-end"></label>
+                        <label>開始：<input type="text" id="task-start" class="custom-datepicker" placeholder="點擊選擇日期與時間"></label>
+                        <label>結束：<input type="text" id="task-end" class="custom-datepicker" placeholder="點擊選擇日期與時間"></label>
                     </div>
                     <div class="details-row">
                         <span class="type-pill selected">報告</span>
@@ -79,12 +86,13 @@
                         <div class="quadrant q4" data-quadrant="不重要不緊急">不重要不緊急</div>
                     </div>
                     <div class="notes-container">
-                        <textarea id="task-notes" placeholder="填寫備註... (選填)"></textarea>
+                        <textarea id="task-notes" placeholder="填寫備註..."></textarea>
                     </div>
                     <button id="submit-btn" class="primary-btn" style="margin-top: 12px;">🚀 確定飛入時間軸</button>
                 </div>
             </div>
 
+            <!-- 時間軸區塊 -->
             <div class="timeline-wrapper">
                 <div class="timeline-track" id="timeline-track">
                     <div class="arrow-line"></div>
@@ -93,50 +101,50 @@
             </div>
 
             <div class="bottom-nav-container">
-                <button id="btn-go-store" class="bottom-nav-btn">🛒 暗黑商店</button>
+                <button id="btn-go-store" class="bottom-nav-btn">🛒 照片商店</button>
                 <button id="btn-go-settings" class="bottom-nav-btn settings-color">⚙️ 設定與帳號</button>
             </div>
         </section>
 
+        <!-- 畫面 3：🤝 加入好友與照片商店 -->
         <section id="screen-store" class="screen hidden">
             <button class="back-btn back-to-tasks">⬅ 返回任務</button>
             <div class="store-box">
-                <h2>🤝 加入好友與暗黑商店</h2>
+                <h2>🤝 加入好友</h2>
                 <div class="search-bar">
-                    <input type="text" id="friend-id-input" placeholder="輸入朋友帳號 (ID)">
-                    <button id="btn-add-friend" class="primary-btn search-btn">加為好友</button>
+                    <input type="text" id="friend-id-input" placeholder="輸入朋友 ID">
+                    <button id="btn-add-friend" class="primary-btn search-btn">加入好友</button>
                 </div>
-
                 <div id="friends-list" class="friends-list"></div>
-
                 <div id="store-gallery" class="store-gallery hidden" style="margin-top: 16px;">
                     <h3 id="store-friend-name" class="store-friend-title"></h3>
                     <div class="store-grid" id="store-grid"></div>
                 </div>
-
-                <button id="btn-collection" class="secondary-btn" style="margin-top: 24px;">🎒 前往我的戰利品收集櫃</button>
+                <button id="btn-collection" class="secondary-btn" style="margin-top: 24px;">🎒 前往戰利品收集櫃</button>
             </div>
         </section>
 
+        <!-- 畫面 4：🎒 戰利品收集櫃 -->
         <section id="screen-collection" class="screen hidden">
             <button class="back-btn" id="back-to-store-from-collection">⬅ 返回商店</button>
             <div class="store-box">
                 <h2>🎒 我的戰利品收集櫃</h2>
-                <p style="font-size:13px; color:var(--text-sec); margin-bottom:12px; font-weight:800;">這裡是你花費血汗硬幣解鎖的所有醜照。</p>
+                <p style="font-size:13px; color:var(--text-sec); margin-bottom:12px; font-weight:800;">以解鎖照片</p>
                 <div class="store-grid" id="collection-grid"></div>
             </div>
         </section>
 
+        <!-- 畫面 5：⚙️ 設定與帳號 -->
         <section id="screen-settings" class="screen hidden">
             <button class="back-btn back-to-tasks">⬅ 返回任務</button>
             <div class="settings-box">
                 <h2>⚙️ 設定與帳號</h2>
                 
                 <div class="setting-group">
-                    <h3>📸 擴充我的醜照庫</h3>
+                    <h3>📸 擴充我的照片庫</h3>
                     <p class="setting-hint">上傳照片並附上敘述，吸引朋友解鎖！</p>
                     <div class="upload-area" style="margin-top: 8px;">
-                        <label for="extra-photo-upload" class="upload-btn">➕ 選擇新醜照</label>
+                        <label for="extra-photo-upload" class="upload-btn">➕ 選擇新照片</label>
                         <input type="file" id="extra-photo-upload" accept="image/*" style="display: none;">
                         <div id="extra-upload-preview" class="preview-box">預覽區</div>
                         <input type="text" id="extra-photo-desc" placeholder="輸入照片敘述...">
@@ -163,7 +171,7 @@
                             <button class="copy-btn" id="btn-copy-id">📋 複製</button>
                         </div>
                         <div class="account-row">
-                            <span class="account-label">對外暱稱：</span>
+                            <span class="account-label">暱稱：</span>
                             <input type="text" id="setting-nickname-input" class="account-input">
                         </div>
                         <button id="btn-save-nickname" class="secondary-btn" style="margin-top: 12px;">💾 儲存暱稱修改</button>
@@ -174,6 +182,7 @@
             </div>
         </section>
 
+        <!-- 詳細資訊面板 -->
         <div class="info-panel" id="info-panel">
             <span class="close-btn" id="close-panel">×</span>
             <h3 id="panel-title">任務標題</h3>
@@ -184,7 +193,7 @@
             <div class="panel-details-box">
                 <p><strong>🕒 開始：</strong><span id="panel-start"></span></p>
                 <p><strong>🏁 結束：</strong><span id="panel-end"></span></p>
-                <p><strong>💡 系統滴咕：</strong><span id="panel-quote" class="quote-text">衝刺吧！</span></p>
+                <p><strong>💡 提醒：</strong><span id="panel-quote" class="quote-text">衝刺吧！</span></p>
                 <div class="panel-notes">
                     <strong>📝 備註：</strong>
                     <div id="panel-notes-content">無</div>
@@ -192,13 +201,15 @@
             </div>
             
             <div class="panel-actions">
-                <button class="edit-btn" id="task-edit-btn">✏️ 修改</button>
-                <button class="delete-btn" id="task-delete-btn">🗑️ 刪除</button>
+                <button class="edit-btn" id="task-edit-btn"> 修改</button>
+                <button class="delete-btn" id="task-delete-btn"> 刪除</button>
             </div>
-            <button class="complete-btn" id="task-complete-btn">完成任務 (+1 🪙)</button>
+            <button class="complete-btn" id="task-complete-btn">完成任務 +1 🪙</button>
         </div>
     </div>
 
+    <!-- 引入日曆套件 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
     <script type="module" src="script.js"></script>
 </body>
 </html>
