@@ -10,7 +10,6 @@
 <body>
 
     <div class="app-container">
-        <!-- 頂部導覽列 -->
         <header id="app-header" class="hidden">
             <div class="user-info">
                 <span id="my-nickname-display">👤 暱稱載入中...</span>
@@ -20,7 +19,6 @@
             </div>
         </header>
 
-        <!-- 畫面 1：登入 / 註冊區 -->
         <section id="screen-login" class="screen active">
             <div class="login-box">
                 <div class="auth-toggle">
@@ -38,12 +36,12 @@
                     <input type="password" id="password-input" placeholder="PASSWORD">
                     
                     <div id="register-fields" class="hidden">
-                        <input type="text" id="nickname-input" placeholder="暱稱">
+                        <input type="text" id="nickname-input" placeholder="NICKNAME (對外暱稱)">
                         <div class="upload-area">
                             <label for="photo-upload" class="upload-btn">➕ CHOOSE PHOTO</label>
                             <input type="file" id="photo-upload" accept="image/*" style="display: none;">
                             <div id="upload-preview" class="preview-box">NO PHOTO</div>
-                            <input type="text" id="photo-desc-input" placeholder="PHOTO DESCRIPTION (為圖片加上解說)">
+                            <input type="text" id="photo-desc-input" placeholder="PHOTO DESCRIPTION (照片敘述)">
                         </div>
                     </div>
                 </div>
@@ -52,7 +50,6 @@
             </div>
         </section>
 
-        <!-- 畫面 2：任務主畫面 -->
         <section id="screen-tasks" class="screen hidden">
             <div class="input-container">
                 <div class="main-input">
@@ -81,7 +78,6 @@
                         <div class="quadrant q3" data-quadrant="不重要且緊急">不重要且緊急</div>
                         <div class="quadrant q4" data-quadrant="不重要不緊急">不重要不緊急</div>
                     </div>
-                    <!-- 備註輸入框與確定飛入按鈕，緊接在四象限下方 -->
                     <div class="notes-container">
                         <textarea id="task-notes" placeholder="填寫備註... (選填)"></textarea>
                     </div>
@@ -89,7 +85,6 @@
                 </div>
             </div>
 
-            <!-- 時間軸區塊 -->
             <div class="timeline-wrapper">
                 <div class="timeline-track" id="timeline-track">
                     <div class="arrow-line"></div>
@@ -97,14 +92,12 @@
                 </div>
             </div>
 
-            <!-- 底部雙導覽列，移出重疊區，保證永遠在時間軸下方 -->
             <div class="bottom-nav-container">
                 <button id="btn-go-store" class="bottom-nav-btn">🛒 暗黑商店</button>
                 <button id="btn-go-settings" class="bottom-nav-btn settings-color">⚙️ 設定與帳號</button>
             </div>
         </section>
 
-        <!-- 畫面 3：🤝 加入好友與暗黑商店 -->
         <section id="screen-store" class="screen hidden">
             <button class="back-btn back-to-tasks">⬅ 返回任務</button>
             <div class="store-box">
@@ -125,17 +118,15 @@
             </div>
         </section>
 
-        <!-- 畫面 4：🎒 戰利品收集櫃 -->
         <section id="screen-collection" class="screen hidden">
             <button class="back-btn" id="back-to-store-from-collection">⬅ 返回商店</button>
             <div class="store-box">
                 <h2>🎒 我的戰利品收集櫃</h2>
-                <p style="font-size:12px; color:var(--text-sec); margin-bottom:12px;">這裡是你花費血汗硬幣解鎖的所有醜照。</p>
+                <p style="font-size:13px; color:var(--text-sec); margin-bottom:12px; font-weight:800;">這裡是你花費血汗硬幣解鎖的所有醜照。</p>
                 <div class="store-grid" id="collection-grid"></div>
             </div>
         </section>
 
-        <!-- 畫面 5：⚙️ 設定與帳號 -->
         <section id="screen-settings" class="screen hidden">
             <button class="back-btn back-to-tasks">⬅ 返回任務</button>
             <div class="settings-box">
@@ -156,10 +147,10 @@
 
                 <div class="setting-group">
                     <h3>🎨 自訂象限顏色</h3>
-                    <div class="color-setting-row"><label>重要且緊急：</label><input type="color" id="color-q1" value="#fa5246"></div>
-                    <div class="color-setting-row"><label>重要不緊急：</label><input type="color" id="color-q2" value="#faae2b"></div>
-                    <div class="color-setting-row"><label>不重要且緊急：</label><input type="color" id="color-q3" value="#10b981"></div>
-                    <div class="color-setting-row"><label>不重要不緊急：</label><input type="color" id="color-q4" value="#3b82f6"></div>
+                    <div class="color-setting-row"><label>重要且緊急：</label><input type="color" id="color-q1" value="#d97b7b"></div>
+                    <div class="color-setting-row"><label>重要不緊急：</label><input type="color" id="color-q2" value="#dca763"></div>
+                    <div class="color-setting-row"><label>不重要且緊急：</label><input type="color" id="color-q3" value="#79b08e"></div>
+                    <div class="color-setting-row"><label>不重要不緊急：</label><input type="color" id="color-q4" value="#769bc9"></div>
                     <button id="btn-save-colors" class="secondary-btn">儲存顏色</button>
                 </div>
 
@@ -183,7 +174,6 @@
             </div>
         </section>
 
-        <!-- 詳細資訊面板 -->
         <div class="info-panel" id="info-panel">
             <span class="close-btn" id="close-panel">×</span>
             <h3 id="panel-title">任務標題</h3>
