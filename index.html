@@ -4,8 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Toplan</title>
-    <!-- 引入自訂日曆套件的 CSS -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=DM+Mono:wght@400&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
@@ -69,8 +67,8 @@
                 <div class="details-area" id="details-area">
                     <!-- 移除原生 datepicker，換成 custom-datepicker 讓 Flatpickr 接管 -->
                     <div class="details-row">
-                        <label>開始：<input type="text" id="task-start" class="custom-datepicker" placeholder="點擊選擇日期與時間"></label>
-                        <label>結束：<input type="text" id="task-end" class="custom-datepicker" placeholder="點擊選擇日期與時間"></label>
+                        <label>開始：<input  id="task-start" type="datetime-local" placeholder="點擊選擇日期與時間"></label>
+                        <label>結束：<input  id="task-end" type="datetime-local" placeholder="點擊選擇日期與時間"></label>
                     </div>
                     <div class="details-row">
                         <span class="type-pill selected">報告</span>
@@ -208,8 +206,6 @@
         </div>
     </div>
 
-    <!-- 引入日曆套件 JS -->
-    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
     <script type="module" src="script.js"></script>
 </body>
 </html>

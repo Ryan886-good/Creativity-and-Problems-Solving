@@ -38,13 +38,7 @@ const quadrantVarMap = {
 const PX_PER_DAY = 30; 
 const TIMELINE_START_OFFSET = 40;
 
-// 🟢 啟動 Flatpickr
-flatpickr(".custom-datepicker", {
-    enableTime: true,
-    dateFormat: "Y-m-d\\TH:i",
-    time_24hr: true,
-    disableMobile: true 
-});
+
 
 function switchScreen(screenId) {
     document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden'));
@@ -262,6 +256,8 @@ document.getElementById('submit-btn').addEventListener('click', async () => {
     await saveTasksToCloud(); 
 });
 
+// 🟢 純中文、無 i18n 版的 7 天制時間軸演算法
+// 🟢 純中文、7天制時間軸 (只有今天顯示星期幾)
 function renderTimeline() {
     const track = document.getElementById('timeline-track');
     const arrowHead = document.getElementById('arrow-head');
@@ -270,7 +266,8 @@ function renderTimeline() {
     const today = new Date();
     today.setHours(0,0,0,0);
 
-    let maxDays = 30; 
+    // 以 28 天 (4週) 為保底長度
+    let maxDays = 28; 
     if (tasks.length > 0) {
         tasks.forEach(t => { 
             const tDate = new Date(t.startStr);
@@ -278,12 +275,28 @@ function renderTimeline() {
             if(diff > maxDays) maxDays = diff; 
         });
     }
-    const maxMonths = Math.ceil(maxDays / 30) + 1; 
+    // 計算需要畫多少個 7 天節點
+    const maxWeeks = Math.ceil(maxDays / 7) + 1; 
 
-    for (let i = 0; i < maxMonths; i++) {
-        let markerDate = new Date(today.getFullYear(), today.getMonth() + i, 1);
-        let diffDays = (i === 0) ? 0 : (markerDate.getTime() - today.getTime()) / (1000 * 3600 * 24);
-        let labelText = (i === 0) ? `今天 (${today.getMonth() + 1}/${today.getDate()})` : `${markerDate.getMonth() + 1}月`;
+    // 純中文星期對照表
+    const weekdays = ["星期日", "星期一", "星期二", "星期三", "星期四", "星期五", "星期六"];
+
+    // 畫出 7 天為單位的標籤
+    for (let i = 0; i < maxWeeks; i++) {
+        // 利用 JavaScript Date 自動推算日期 (換月會自動進位)
+        let markerDate = new Date(today.getFullYear(), today.getMonth(), today.getDate() + (i * 7));
+        let diffDays = i * 7;
+        let dayStr = weekdays[markerDate.getDay()]; // 取得星期幾
+        
+        let labelText = "";
+        if (i === 0) {
+            // 🟢 第一個節點標示「今天」並加上星期幾
+            labelText = `今天 (${markerDate.getMonth() + 1}/${markerDate.getDate()} ${dayStr})`;
+        } else {
+            // 🟢 七天後的標籤，移除星期幾，只顯示日期 (例如：6/13)
+            labelText = `${markerDate.getMonth() + 1}/${markerDate.getDate()}`;
+        }
+
         const leftPos = TIMELINE_START_OFFSET + (diffDays * PX_PER_DAY);
         const marker = document.createElement('div');
         marker.className = 'month-marker';
@@ -292,14 +305,18 @@ function renderTimeline() {
         track.appendChild(marker);
     }
 
+    // 如果沒有任務，只畫時間軸標籤並計算寬度
     if(tasks.length === 0) {
-        const requiredWidth = TIMELINE_START_OFFSET + (maxMonths * 30 * PX_PER_DAY) + 60;
+        const requiredWidth = TIMELINE_START_OFFSET + (maxWeeks * 7 * PX_PER_DAY) + 60;
         track.style.width = `${requiredWidth}px`;
         arrowHead.style.left = `${requiredWidth - 10}px`;
         return;
     }
 
+    // 任務排序 (依開始時間)
     tasks.sort((a, b) => new Date(a.startStr) - new Date(b.startStr));
+    
+    // 計算同時間堆疊
     const timeCounts = {};
     tasks.forEach(task => {
         if (!timeCounts[task.startStr]) timeCounts[task.startStr] = 0;
@@ -310,6 +327,7 @@ function renderTimeline() {
     let lastTime = null;
     let currentStackIndex = 0;
 
+    // 計算精準座標與防碰撞機制 (強制錯開至少 16px)
     tasks.forEach(task => {
         const tDate = new Date(task.startStr);
         const diffDaysFloat = (tDate.getTime() - today.getTime()) / (1000 * 3600 * 24);
@@ -328,11 +346,13 @@ function renderTimeline() {
         lastTime = task.startStr;
     });
 
+    // 撐開時間軸總長度
     const maxLeft = tasks[tasks.length - 1].leftPos;
-    const requiredWidth = Math.max(TIMELINE_START_OFFSET + (maxMonths * 30 * PX_PER_DAY) + 60, maxLeft + 100);
+    const requiredWidth = Math.max(TIMELINE_START_OFFSET + (maxWeeks * 7 * PX_PER_DAY) + 60, maxLeft + 100);
     track.style.width = `${requiredWidth}px`;
     arrowHead.style.left = `${requiredWidth - 10}px`;
 
+    // 實體渲染卡牌
     tasks.forEach(task => {
         const totalOnTime = timeCounts[task.startStr];
         const topPos = 50 + (task.stackIndex - (totalOnTime - 1) / 2) * 18;
@@ -343,8 +363,9 @@ function renderTimeline() {
         card.style.background = `var(${quadrantVarMap[task.quadrant]})`;
         card.style.left = `${task.leftPos}px`;
         card.style.top = `${topPos}%`;
-        card.title = `${task.name}\n開始: ${task.startStr.replace('T', ' ')}`; 
+        card.title = `${task.name}\n${task.startStr.replace('T', ' ')}`; 
         
+        // 處理飛入動畫的透明度
         if(task.isNew) {
             card.style.opacity = '0';
         } else {
@@ -562,7 +583,7 @@ function renderCollectionGrid() {
     const validPhotos = currentUser.unlockedPhotos.filter(p => typeof p === 'object' && p.url);
 
     if (validPhotos.length === 0) {
-        grid.innerHTML = '<span style="grid-column: span 3; font-size: 13px; color: var(--text-sec); font-weight:800;">你還沒有解鎖任何照片喔！（舊版解鎖的無法顯示）</span>';
+        grid.innerHTML = '<span style="grid-column: span 3; font-size: 13px; color: var(--text-sec); font-weight:800;">你還沒有解鎖任何照片喔！</span>';
         return;
     }
 

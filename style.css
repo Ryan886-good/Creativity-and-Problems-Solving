@@ -17,7 +17,6 @@
     --q4-color: #769bc9; 
 }
 
-/* 恢復使用 Nunito 字體 */
 * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Nunito', sans-serif; }
 body { background-color: var(--bg-color); display: flex; justify-content: center; align-items: center; min-height: 100vh; }
 
@@ -36,12 +35,19 @@ header { display: flex; justify-content: space-between; align-items: center; pad
 .secondary-btn { width: 100%; padding: 12px; background: var(--secondary); color: var(--text-main); border: none; border-radius: 12px; font-weight: 800; cursor: pointer; transition: 0.2s;}
 .secondary-btn:hover { background: #c2b2a0; }
 
-/* 🟢 手機防破版修復與輸入框設定 */
-input[type="text"], input[type="password"], textarea {
+/* 🟢 確保 datetime-local 跟一般輸入框一樣樣式，且不會在手機上破版 */
+input[type="text"], input[type="password"], textarea, input[type="datetime-local"] {
     width: 100%; padding: 14px 16px; margin-bottom: 12px; border: 2px solid var(--border); border-radius: 12px; font-size: 14px; font-weight: 800; outline: none; background: #ffffff; color: var(--text-main); font-family: inherit; transition: 0.3s; box-sizing: border-box; max-width: 100%;
 }
 input::placeholder, textarea::placeholder { color: #c0b2a0; font-weight: 800; }
 input:focus, textarea:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(129, 107, 81, 0.1); }
+
+.select-styled {
+    appearance: none; cursor: pointer; width: 100%; margin-top: 8px;
+    background-image: url('data:image/svg+xml;utf8,<svg fill="%23816b51" height="24" viewBox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg"><path d="M7 10l5 5 5-5z"/></svg>');
+    background-repeat: no-repeat; background-position: right 14px center; padding-right: 40px;
+}
+.select-styled:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(129, 107, 81, 0.1); }
 
 #screen-login { background-color: var(--bg-color); padding: 0; display: flex; flex-direction: column; }
 .login-box { width: 100%; height: 100%; padding: 40px 30px; text-align: center; display: flex; flex-direction: column; position: relative; }
@@ -68,8 +74,7 @@ input:focus, textarea:focus { border-color: var(--primary); box-shadow: 0 0 0 3p
 
 .details-area { display: none; padding-top: 16px; border-top: 2px dashed var(--border); animation: fadeIn 0.3s; margin-top: 12px;}
 .details-row { display: flex; gap: 8px; margin-bottom: 12px; align-items: center; flex-wrap: wrap; }
-
-/* 🟢 手機防破版：解除 Flex 預設寬度限制 */
+/* 🟢 原生日期選擇器防破版關鍵 */
 .details-row label { flex: 1 1 100%; display: flex; flex-direction: column; gap: 4px; align-items: flex-start; font-size: 14px; color: var(--text-main); font-weight: 800; min-width: 0; max-width: 100%;}
 
 .type-pill { font-size: 12px; padding: 6px 12px; background: var(--bg-color); border-radius: 12px; cursor: pointer; border: 2px solid var(--border); color: var(--text-sec); font-weight: 800;}
@@ -96,7 +101,9 @@ input:focus, textarea:focus { border-color: var(--primary); box-shadow: 0 0 0 3p
 .timeline-track { min-width: 300px; height: 140px; position: relative; transition: width 0.3s; }
 .arrow-line { position: absolute; top: 50%; left: 0; right: 0; height: 3px; background: linear-gradient(90deg, var(--secondary) 0%, var(--primary) 95%, transparent 100%); transform: translateY(-50%); border-radius: 2px;}
 .arrow-head { position: absolute; top: 50%; right: -5px; width: 0; height: 0; border-top: 6px solid transparent; border-bottom: 6px solid transparent; border-left: 10px solid var(--primary); transform: translateY(-50%); transition: left 0.3s; }
-.month-marker { position: absolute; top: 50%; transform: translateY(-15px); font-size: 12px; font-weight: 900; color: var(--text-sec); padding-left: 6px; border-left: 3px solid var(--secondary); height: 14px; line-height: 14px; pointer-events: none; letter-spacing: 1px;}
+
+/* 🟢 時間標籤稍微加寬，因為字數變多了 */
+.month-marker { position: absolute; top: 50%; transform: translateY(-15px); font-size: 11px; font-weight: 900; color: var(--text-main); padding-left: 6px; border-left: 3px solid var(--secondary); height: 14px; line-height: 14px; pointer-events: none; letter-spacing: 0.5px; white-space: nowrap;}
 .task-card { position: absolute; width: 10px; height: 30px; border-radius: 6px; box-shadow: 0 2px 6px rgba(113,92,67,0.3); cursor: pointer; transition: all 0.3s; transform: translate(-50%, -50%); opacity: 0; border: 1.5px solid #fff; }
 .task-card:hover { transform: translate(-50%, -50%) scale(1.6); box-shadow: 0 6px 15px rgba(113,92,67,0.4); z-index: 20; }
 
@@ -162,12 +169,3 @@ input:focus, textarea:focus { border-color: var(--primary); box-shadow: 0 0 0 3p
 
 .flying-coin { position: fixed; width: 34px; height: 34px; border-radius: 50%; background: var(--q2-color); border: 3px solid #fff; box-shadow: 0 4px 10px rgba(113,92,67,0.3); z-index: 9999; pointer-events: none; transition: all 0.6s cubic-bezier(0.25, 1, 0.5, 1); display: flex; align-items: center; justify-content: center; font-size: 18px; }
 @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
-
-/* 🟢 將自訂日曆 Flatpickr 的外觀改造成拿鐵主題，且套用原本字體 */
-.flatpickr-calendar { font-family: 'Nunito', sans-serif !important; background: var(--app-bg) !important; border: 2px solid var(--border) !important; border-radius: 16px !important; box-shadow: 0 10px 25px rgba(113, 92, 67, 0.2) !important; }
-.flatpickr-day.selected, .flatpickr-day.startRange, .flatpickr-day.endRange, .flatpickr-day.selected.inRange, .flatpickr-day.startRange.inRange, .flatpickr-day.endRange.inRange, .flatpickr-day.selected:focus, .flatpickr-day.startRange:focus, .flatpickr-day.endRange:focus, .flatpickr-day.selected:hover, .flatpickr-day.startRange:hover, .flatpickr-day.endRange:hover, .flatpickr-day.selected.prevMonthDay, .flatpickr-day.startRange.prevMonthDay, .flatpickr-day.endRange.prevMonthDay, .flatpickr-day.selected.nextMonthDay, .flatpickr-day.startRange.nextMonthDay, .flatpickr-day.endRange.nextMonthDay { background: var(--primary) !important; border-color: var(--primary) !important; }
-.flatpickr-months .flatpickr-month { background: var(--primary) !important; border-top-left-radius: 14px; border-top-right-radius: 14px;}
-.flatpickr-current-month .flatpickr-monthDropdown-months { background: var(--primary) !important; }
-.flatpickr-weekdays { background: var(--primary) !important; }
-span.flatpickr-weekday { color: #fff !important; }
-.flatpickr-time input { color: var(--text-main) !important; font-weight: 800; font-family: inherit;}
