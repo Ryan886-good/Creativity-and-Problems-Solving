@@ -169,3 +169,34 @@ input:focus, textarea:focus { border-color: var(--primary); box-shadow: 0 0 0 3p
 
 .flying-coin { position: fixed; width: 34px; height: 34px; border-radius: 50%; background: var(--q2-color); border: 3px solid #fff; box-shadow: 0 4px 10px rgba(113,92,67,0.3); z-index: 9999; pointer-events: none; transition: all 0.6s cubic-bezier(0.25, 1, 0.5, 1); display: flex; align-items: center; justify-content: center; font-size: 18px; }
 @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+/* ==========================================
+   🔥 最後的強硬修復：手機版 datetime-local 防破版補丁
+   ========================================== */
+
+/* 1. 先從 HTML 層級強制鎖死寬度 */
+html, body {
+    max-width: 100%;
+    overflow-x: hidden; /* 強制移除水平捲軸 */
+}
+
+/* 2. 針對任務畫面輸入框區域進行強化 */
+#screen-tasks .input-container {
+    overflow: hidden; /* 確保內容不會溢出框框 */
+}
+
+/* 3. 最關鍵：徹底治好 datetime-local 在手機上的傲慢 */
+#screen-tasks input[type="datetime-local"] {
+    width: 100% !important; /* 強制套用 100% 寬度 */
+    max-width: 100% !important; /* 強制鎖死最大寬度為 parent 100% */
+    box-sizing: border-box !important; /* 確保 padding 不會加寬框框 */
+    min-width: 0 !important; /* 核心黑科技：移除手機預設的最小寬度制限 */
+    flex: 1 1 100% !important; /* 讓它在 flex 佈局中可以被壓縮 */
+    -webkit-appearance: none; /* 嘗試移除部分 Safari 預設樣式 */
+}
+
+/* 4. 強化 parent label 的限制 */
+#screen-tasks .details-row label {
+    flex: 1 1 100% !important; /* 確保 label 本身也聽話 */
+    max-width: 100% !important; /* 限制 label 最大寬度 */
+    min-width: 0 !important; /* 解除所有最小寬度限制 */
+}
