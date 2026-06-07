@@ -36,7 +36,7 @@ header { display: flex; justify-content: space-between; align-items: center; pad
 .secondary-btn:hover { background: #c2b2a0; }
 
 input[type="text"], input[type="password"], textarea, input[type="datetime-local"] {
-    width: 100%; padding: 14px 16px; margin-bottom: 12px; border: 2px solid var(--border); border-radius: 12px; font-size: 14px; font-weight: 800; outline: none; background: #ffffff; color: var(--text-main); font-family: inherit; transition: 0.3s; box-sizing: border-box; max-width: 100%;
+    width: 100%; padding: 14px 12px; margin-bottom: 12px;box-sizing: border-box !important; border: 2px solid var(--border); border-radius: 12px; font-size: 14px; font-weight: 800; outline: none; background: #ffffff; color: var(--text-main); font-family: inherit; transition: 0.3s; box-sizing: border-box; max-width: 100%;
 }
 input::placeholder, textarea::placeholder { color: #c0b2a0; font-weight: 800; }
 input:focus, textarea:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(129, 107, 81, 0.1); }
@@ -217,5 +217,4 @@ input:focus, textarea:focus { border-color: var(--primary); box-shadow: 0 0 0 3p
     font-size: 15px !important;    /* 恢復正常字體，完美顯示時間 */
     margin: 0 !important;
     min-width: 0 !important;
-}
 }
