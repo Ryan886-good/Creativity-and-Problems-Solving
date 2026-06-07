@@ -211,7 +211,7 @@ input:focus, textarea:focus { border-color: var(--primary); box-shadow: 0 0 0 3p
 
 /* 3. 既然日期框有 100% 空間了，把它恢復成最舒適的大小 */
 #screen-tasks input[type="datetime-local"] {
-    width: 100% !important;
+    width: 90% !important;
     box-sizing: border-box !important;
     padding: 14px 16px !important; /* 恢復大內距，不用再委屈縮小了 */
     font-size: 15px !important;    /* 恢復正常字體，完美顯示時間 */
